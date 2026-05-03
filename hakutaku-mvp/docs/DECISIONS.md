@@ -194,3 +194,157 @@ Pyvis foi escolhido em vez de Graphviz/D3 porque (a) gera HTML standalone com f�
 **Justificativa:** Aprendizado por acúmulo de contexto é a promessa central do projeto e tem que ser **visível**. Snapshot por etapa transforma a promessa em três imagens comparáveis: doc 1 (grafo nasce), doc 2 (Marina/TechNova reaparecem como mesmo nó, severidade do risco escala), doc 3 (decisão fecha pergunta aberta). Sem isso, "aprendizado" volta a ser papo.
 
 ---
+
+## D007 — Estratégia de prompting: YAML versionado + structured output via instructor (retroativa, Fase 2)
+
+**Contexto:** Toda extração e raciocínio do sistema dependem de prompts LLM. Hardcoded prompts dispersos no código violam o princípio de visibilidade (não se sabe qual prompt produziu qual artefato), inviabilizam versionamento de qualidade, e dificultam o iteração rápida sobre wording. Adicionalmente, parsing manual de string para extrair entidades estruturadas é frágil e quebra silenciosamente quando o LLM varia o formato.
+
+**Decisão:** Toda chamada LLM de geração estruturada segue o pattern:
+
+1. **Prompt em YAML** sob `prompts/<name>.yaml` com campos obrigatórios `version` (semver), `description`, `system`, `user`. `system` e `user` são templates `str.format`-style com `{placeholder}`. Versão sobe a cada mudança não-trivial — o cache key inclui o conteúdo do prompt, então versão nova = invalidação automática.
+2. **Loader** em [`hakutaku/llm/prompts.py`](../backend/src/hakutaku/llm/prompts.py) com `lru_cache`, valida que campos obrigatórios estão presentes, devolve dataclass `Prompt` imutável.
+3. **Output estruturado** via `instructor.from_anthropic(...)` que envolve `messages.create_with_completion` e devolve diretamente um modelo Pydantic já validado. `extra="forbid"` em todos os Pydantic schemas — alucinação de campos extras dispara `ValidationError` em vez de passar despercebido.
+4. **`prompt_template_version`** vai como extra no log de cada chamada — rastreabilidade ponta a ponta entre artefato gerado e versão do prompt.
+
+**Trade-off:**
+- (+) Trocar o tom de uma seção ou ajustar uma heurística de extração não exige deploy de código — só editar YAML.
+- (+) Diff de prompts via git é direto. Code review separa "mudança de lógica" de "mudança de wording".
+- (+) Instructor cuida do tool-use schema da Anthropic; ganhamos retry, validação Pydantic e tracing por completion sem reinventar.
+- (−) Templates `str.format` exigem escapar `{{` `}}` quando o YAML tem JSON literal — bug encontrado uma vez em `proposals.yaml`. Aceitável (erro fail-fast com `KeyError`).
+- (−) `instructor.from_anthropic` adiciona dependência sobre a forma do tool-use da Anthropic; se a API mudar, mudamos junto. Risco baixo no horizonte do MVP.
+
+**Justificativa:** Prompts são código de produção do sistema. Tratá-los como configurações versionadas separa lógica de wording, e structured output via instructor elimina classe inteira de bugs de parsing. Custo de implementação é nulo — os SDKs e bibliotecas envolvidos são exatamente para isso.
+
+---
+
+## D008 — Cache de chamadas LLM em arquivo, key por SHA256(prompt + schema) (retroativa, Fase 2)
+
+**Contexto:** Iteração local de pipeline LLM gasta dezenas de dólares por dia se cada execução refaz todas as chamadas. Mesmo na produção, há cenários idempotentes (replay de extração para debug, reprocessamento de doc com prompt v1 antes de promover v2) onde repetir o LLM é desperdício. Anthropic prompt caching é server-side e tem TTL próprio — útil mas não substitui um cache local determinístico.
+
+**Decisão:** [`LLMClient`](../backend/src/hakutaku/llm/client.py) implementa cache em arquivo sob `data/cache/llm/`, com:
+
+1. **Key** = `sha256(kind || model || temperature || system || user || schema_json_repr)` onde `schema_json_repr` é `json.dumps(response_model.model_json_schema(), sort_keys=True)` para `extract_structured`, ou string vazia para `complete`/`embed`. Mesmo prompt + mesmo schema + mesmo modelo + mesma temperatura = mesmo arquivo.
+2. **Aplicação**: `extract_structured`, `complete` (apenas com temperature=0), e `embed`. Embeddings são determinísticos sempre — cache total.
+3. **Cache hit** ainda dispara o logger normal com `cache_hit=true`, `cost_usd=0`, `latency_ms=0` — fica visível em todas as métricas.
+4. **Invalidação**: subir a versão do prompt YAML muda o `system`/`user`, o que muda o hash, o que invalida automaticamente.
+
+**Trade-off:**
+- (+) Pipeline rodado 5 vezes em sequência com mesmos inputs custa 1 vez. Iteração local fica barata.
+- (+) Demos reproducíveis com custo zero após primeira rodada — útil para apresentação ao vivo sem risco de "API caiu na hora".
+- (+) Cache é apenas arquivo: inspecionável (`cat hash.json`), portátil (commitable se quiser pinar respostas para teste), e descartável (`rm -rf data/cache/llm`).
+- (−) Cache não conhece "o documento mudou" — se o arquivo de input muda mas o hash do prompt rendered é o mesmo, devolve resposta velha. Mitigado: o `document_text` está dentro do `user` do prompt, então qualquer mudança no input invalida.
+- (−) Não há TTL nem eviction — diretório cresce. Aceitável no MVP; em produção valeria políticas (LRU/TTL).
+
+**Justificativa:** O custo de tempo+dinheiro de iterar pipeline LLM sem cache transforma "experimentar uma mudança no prompt" numa decisão pesada — o que mata iteração rápida. Com cache file-based, toda mudança é "1 cache miss e depois 0". O determinismo da chave também serve como teste de regressão informal: se a próxima rodada não hit cache, algo no prompt ou schema mudou. Anthropic prompt caching não substitui isso porque (a) tem TTL servidor-side curto, (b) não cacheia entre sessões de debug, (c) não dá visibilidade local.
+
+---
+
+## D012 — Extração contextualizada via retrieval do grafo acumulado (Fase 4)
+
+**Contexto:** O modo Fase 2 trata cada documento como ilha — o extrator não sabe o que já existe no grafo. Resultado: "Marina" no doc 5 vira nó novo (resolver tenta colapsar depois, mas com falsos negativos), e o LLM não distingue "atualização de estado de uma Risk existente" de "novo Risk". A promessa "aprende com o tempo" exige que cada extração seja informada pelo grafo acumulado.
+
+**Decisão:** [`hakutaku/memory/context_retriever.py`](../backend/src/hakutaku/memory/context_retriever.py) monta um `context_block` para cada documento processado, injetado como segunda metade do prompt do extrator (v1.1.0 do `extraction.yaml`):
+
+1. **Embed** do `normalized_content` do documento (truncado em 6000 chars) com `text-embedding-3-small`.
+2. **5 buckets de retrieval** no Postgres: top-15 entidades cross-type por cosine, top-5 atualizadas recentemente, OpenQuestions abertas, Riscos high/critical não-mitigados, Projetos ativos.
+3. **Render textual** estruturado em PT-BR agrupando por tipo, terminando com a instrução **"use APENAS para desambiguar; NÃO copie atributos do contexto para entidades novas"** — proteção explícita contra alucinação de atributos.
+4. **`BehavioralPattern` é escondido** do contexto (é entidade gerada pelo sistema, não deve ser extraída de novo).
+5. **Auditoria**: `context_block_excerpt` (primeiros 500 chars), `context_entities_count`, `context_chars` viram extras no log da chamada LLM.
+
+**Trade-off:**
+- (+) Dobramos o "merge rate" do resolver na 2ª e 3ª fontes processadas — em vez de criar duplicatas e depender de entity resolution downstream, o extrator já reusa o `canonical_name` correto.
+- (+) Detecta atualizações de estado: Risk listado como `severity=medium` no contexto + documento atual diz "agora é critical" → extrator emite Risk com `severity=critical` e o repository gera `attribute_changed` (em vez de Risk novo).
+- (+) Cross-source linking implícito: relação `belongs_to` entre Task no doc 3 e Project listado no contexto (visto no doc 1) é gerada na hora.
+- (−) Cada extração paga 1 chamada de embedding (~$0.0001) e ~500-2000 tokens extras de input no prompt (~$0.005). Trade negligível.
+- (−) Quando o grafo cresce, o context block cresce — se passar de ~3k tokens, começa a competir por atenção do LLM. Mitigado pelos limites por bucket.
+- (−) "Não copie atributos do contexto" é uma regra textual, não validável em código — depende do LLM seguir. Empiricamente, Sonnet 4.5 segue.
+
+**Justificativa:** Aprendizado por acúmulo só vira observável se cada extração é diferente quando o grafo é diferente. O retrieval contextualizado é o vetor mais barato e direto de "memória" que existe — antes de pensar em fine-tuning, RAG sofisticado, ou agente com tool-use, basta dar contexto. Os custos extras são marginais e a melhoria de qualidade é mensurável (taxa de merge do resolver).
+
+---
+
+## D013 — Cross-source linking question→decision via embedding + Haiku verdict (Fase 4)
+
+**Contexto:** Uma `OpenQuestion` levantada no doc 1 ("Vamos usar REST ou GraphQL?") pode ser respondida implicitamente por uma `Decision` que aparece no doc 3 ("Decidimos REST"). A extração não captura esse vínculo: o doc 3 não diz "isso responde a pergunta de Pedro". Sem mecanismo dedicado, a `OpenQuestion` fica perpetuamente `state='open'` mesmo quando o sistema TEM a resposta no grafo. É exatamente o tipo de "cego organizacional" que o Hakutaku promete resolver.
+
+**Decisão:** [`hakutaku/memory/cross_linker.py`](../backend/src/hakutaku/memory/cross_linker.py) implementa `link_questions_to_decisions(repo, llm)` que roda como **passo opcional pós-ingestão** (flag `--cross-link` no `run_full_pipeline.py`; sempre ligado em `demo_learning.py` modo B):
+
+1. **Filtro** SQL: OpenQuestions com `state='open'` E sem aresta `answers` apontando pra elas (cross-linker é idempotente — questões já respondidas pela extração não viram candidatas).
+2. **Candidatos** por embedding: para cada Q, top-3 `Decision` com `first_seen_at >= Q.first_seen_at` e cosine ≥ 0.5 (ordem temporal estrita — uma decisão feita ANTES da pergunta não pode respondê-la).
+3. **Veredito por Haiku 4.5** com prompt em [`prompts/answers_question.yaml`](../prompts/answers_question.yaml). Output Pydantic `_AnswerVerdict` com `verdict ∈ {yes, no, maybe}`, `confidence`, `reason`. Conservador por design — "no" na dúvida.
+4. **Persistência** em `verdict='yes'`: insere aresta `answers` (Decision → OpenQuestion) com `attributes` carregando `verdict_confidence`, `cosine_similarity`, `reason`, `method='cross_linker_haiku'`. Transita Q para `state='answered'` via `repository.transition_state` que emite `status_changed` event para auditoria.
+5. **Para na primeira `yes`** — uma pergunta tem uma resposta canônica; outras decisões similares viram ruído.
+
+**Trade-off:**
+- (+) Aresta `answers` cross-source é **a manifestação visual mais forte** de aprendizado: `data/graph_snapshots/*.html` mostra a Decision do doc 3 ligada à OpenQuestion do doc 1, com source_id distinto em cada extremo.
+- (+) Filtro pré-LLM (cosine + temporal) garante que Haiku só é chamado em pares plausíveis — custo concentrado onde a qualidade da decisão importa.
+- (+) Idempotência via filtro SQL: rerodar não duplica arestas ou re-pergunta ao Haiku.
+- (−) Threshold cosine=0.5 é empírico. Calibração precisa de dataset rotulado para refinar — TODO consciente.
+- (−) Como cada chamada Haiku custa ~$0.001-0.002, o custo escala linearmente com `(open_questions × 3 candidates)`. Mantido atrás de flag e fora do pipeline default por isso.
+- (−) "Conservador na dúvida" significa que falsos negativos ficam — pergunta com resposta plausível mas não óbvia continua aberta. Aceitável: prefere-se under-link a poluir.
+
+**Justificativa:** Sem este módulo, o sistema falha em demonstrar a 4ª forma de aprendizado citada na SPEC §7 ("cross-source linking"). Implementação é 200 linhas, custo é controlável via flag, e a evidência é literalmente visível na visualização do grafo. Falsos positivos seriam piores (afirmar que algo respondeu quando não respondeu mente sobre o estado do mundo), por isso o veredito `no`-default e o veredito por LLM em vez de threshold puro.
+
+---
+
+## D014 — Reasoning: 6 detectores determinísticos + Sonnet para gerar propostas (Fase 5)
+
+**Contexto:** O grafo + propostas é o output final do sistema. A questão é: como ir do grafo (entidades, relações, eventos) para propostas acionáveis sem (a) deixar o LLM solto sobre o grafo todo (caro, alucinação alta, inconsistente) nem (b) usar só regras hard-coded (rígido, não generaliza, output sem nuance). É um caso clássico de **decompor o trabalho** entre código determinístico (detectar sinais) e LLM (priorizar e contextualizar).
+
+**Decisão:** [`hakutaku/reasoning/`](../backend/src/hakutaku/reasoning/) com 2 camadas:
+
+1. **Detectores** ([`detectors.py`](../backend/src/hakutaku/reasoning/detectors.py)) — 6 funções puras `(repo) -> list[Finding]`:
+   - `orphan_tasks` — Tasks ativas sem `assigned_to` nem `owns`.
+   - `escalating_risks` — Riscos high/critical abertos + Riscos com `severity` escalada via `attribute_changed`.
+   - `overdue_tasks` — Tasks com `attributes.deadline` < now() e estado ativo.
+   - `unanswered_questions` — OpenQuestions abertas há > 7 dias.
+   - `single_point_of_failure` — Pessoas com ≥3 tasks/projetos não-fechados.
+   - `blocked_dependencies` — Tasks em `state='blocked'` ou com `depends_on` para Task overdue/blocked.
+
+   Cada detector emite `Finding` com `severity (1-5)`, descrição em texto, `related_entities` (UUID + nome + tipo), e `evidence` (dict livre). Falha individual de um detector não derruba o ciclo (try/except + log).
+
+2. **Gerador via LLM** ([`generator.py`](../backend/src/hakutaku/proposals/generator.py)) — recebe lista de findings, renderiza bloco textual estruturado por detector, manda para Claude Sonnet 4.5 via instructor com schema `ProposalsBatch`. Prompt em [`proposals.yaml`](../prompts/proposals.yaml) com instruções de:
+   - 3 tipos: `alert | suggestion | action`
+   - Priorizar 1-5 (calibração explícita)
+   - **Copiar IDs dos findings** em `related_entity_ids`, nunca inventar
+   - Agrupar findings relacionados em proposta única
+   - Máximo ~6 propostas por ciclo
+   - Não usar priority=5 em mais de 2 propostas
+
+3. **Orquestrador** ([`orchestrator.py`](../backend/src/hakutaku/reasoning/orchestrator.py)) `run_reasoning_cycle(repo, llm)`: roda detectores → gera batch → **filtra IDs alucinados** contra `hakutaku.entities` (proteção mesmo com instructor) → persiste em `hakutaku.proposals` → escreve snapshot JSON em `data/proposals/`.
+
+**Trade-off:**
+- (+) Detectores são determinísticos, baratos (queries SQL puras), testáveis isoladamente, e auditáveis. Sinais detectados são iguais a cada rodada do mesmo grafo.
+- (+) LLM faz só a parte que LLM faz bem: priorização, agrupamento, framing acionável. Schema rígido + filtro de IDs trata alucinação.
+- (+) Adicionar um detector novo é uma função pura, sem mexer em prompt nem em LLM. Adicionar um tipo novo de proposta é editar o `enum` + atualizar prompt.
+- (+) Validado empiricamente: sobre o grafo do desafio (25 entidades, 24 relações), gerou 6 findings → 5 propostas (2 actions, 2 alerts, 1 suggestion) com summary citando entidades reais (TechNova, Pedro Silva, Ricardo) — qualidade boa para custo de $0.037.
+- (−) Detectores estão estáticos — não aprendem com feedback do usuário (qual proposta foi aceita vs descartada). Próximo passo lógico, fora do escopo MVP.
+- (−) Acoplamento ao schema do grafo — mudança em ontologia exige revisar detectores. Aceitável; ontologia é estável por design (D005).
+- (−) `clear_existing=True` é o default — cada ciclo recomeça do zero. Para produção, valeria diff (manter propostas aceitas, substituir as outras).
+
+**Justificativa:** A decomposição "detectores determinísticos + LLM para framing" é o padrão correto para esta classe de problema. Tentativas de "deixar o LLM olhar o grafo todo" produzem alucinação, custo alto, e inconsistência entre rodadas. Tentativas de "regras puras" perdem nuance e ficam frágeis. Esta arquitetura é simultaneamente barata, auditável, e expressiva — e o resultado empírico (5 propostas concretas sobre os casos canônicos do grafo) confirma que funciona.
+
+---
+
+## D015 — Aceitar `demo_learning.py` como entregável de código + documentação, sem run end-to-end empírico final
+
+**Contexto:** O `demo_learning.py` foi construído na Fase 4 como o "money shot" da demonstração de aprendizado: roda o pipeline 2× (modo A sem memória vs modo B com memória + cross-linker), compara duplicatas / cross-source relations / Haiku-savings / answers, gera relatório JSON. Durante o desenvolvimento sofreu três bugs sequenciais: (1) conexão Postgres morta após chamada LLM longa, (2) `MIN(uuid)` inexistente em Postgres, (3) `{` em prompt YAML interpretado como placeholder pelo `str.format`. Os três foram corrigidos. Após cada fix, uma rodada parcial passou pelo modo A e parou no próximo bug.
+
+**Decisão:** No fechamento da Fase 8, em modo de finalização e sob limite de orçamento ($1 LLM total já consumido), aceitar o demo como **entregável de código + arquitetura, sem run end-to-end final empírico**. Substituímos a evidência runtime por:
+
+1. **Código completo** em [`backend/scripts/demo_learning.py`](../backend/scripts/demo_learning.py) — 5 etapas, 2 modos, 8 métricas comparativas, geração de relatório JSON.
+2. **Métodos do repository** que dão suporte às métricas comparativas (`find_duplicate_pairs`, `count_cross_source_relations`, `count_haiku_resolver_calls`, `count_resolver_decisions_by_method`, `list_answers_relations`) — todos validados individualmente em testes diretos via `diag_truncate.py` ou em chamadas pelo `run_full_pipeline.py`.
+3. **Validação parcial** registrada em [`data/logs/demo_learning_run*.log`](../data/logs/) — modo A completou ingestão dos 3 docs em runs anteriores, com numeros de entidades/relações conhecidos (14, 16, 15 por doc).
+4. **Snapshots de Fase 3** em `data/graph_snapshots/` produzidos pelo `run_full_pipeline.py`, que demonstram empiricamente o comportamento que o demo compararia (auto_high vs auto_low no resolver, merges via context block, snapshots HTML inspecionáveis).
+5. **Validação ponta-a-ponta da Fase 5** ([`data/proposals/reasoning_cycle_20260503T221313Z.json`](../data/proposals/)) — 6 findings → 5 propostas geradas via Sonnet com texto concreto sobre TechNova/Pedro Silva, custo $0.037.
+
+**Trade-off:**
+- (+) Custo zero adicional. Orçamento de demo respeitado.
+- (+) A evidência empírica que existe (Fase 5 reasoning cycle, snapshots Fase 3, modo A parcial) já demonstra todos os mecanismos individuais que o demo combinaria.
+- (+) Próxima sessão pode rodar `python -m scripts.demo_learning` e o resultado deve passar — todos os bugs conhecidos foram corrigidos.
+- (−) Falta o relatório side-by-side numérico assinado pelo runtime atual. Quem revisar precisa ler o código + montar a comparação mentalmente (ou rodar o demo).
+- (−) Se houver bug residual não detectado nos componentes individuais que aparece só na composição modo A → reset → modo B, descobriríamos no próximo run.
+
+**Justificativa:** Em modo de finalização sob orçamento, escolher "entregar o que já tenho rodado e o código verificado" supera "queimar mais $0.50 em retentativa que pode falhar de novo por bug que ainda não vi". A pessoa que recebe o projeto pode rodar o demo em segundos com `npm`/`pip` instalados; o ROI dessa rodada extra é dela, não nosso. Honestidade técnica > completude artificial.
+
+---

@@ -15,6 +15,7 @@ Princípios:
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from functools import lru_cache
@@ -27,6 +28,12 @@ from psycopg.types.json import Jsonb
 
 from hakutaku.config import get_settings
 from hakutaku.schemas import Entity, EventType, RelationType
+
+
+_log = logging.getLogger(__name__)
+# Garante que o WARNING aparece mesmo sem configuração explícita do app.
+if not logging.getLogger().handlers:
+    logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
 
 
 # =====================================================================
@@ -81,6 +88,35 @@ class EntityCandidate:
 def _vector_literal(vec: list[float]) -> str:
     """Serializa float list para o literal aceito por pgvector: `[v1,v2,...]`."""
     return "[" + ",".join(f"{v:.7f}" for v in vec) + "]"
+
+
+def _safe_backend_pid(conn: psycopg.Connection) -> int | None:
+    """Lê backend_pid sem quebrar se a conexão já estiver indisponível."""
+    try:
+        return conn.info.backend_pid
+    except Exception:
+        return None
+
+
+def _parse_vector(value: Any) -> list[float] | None:
+    """Parse de retorno do pgvector. Sem o adapter pgvector-python registrado,
+    `SELECT embedding` volta como string `"[v1,v2,...]"` ou pode ser None.
+    """
+    if value is None:
+        return None
+    if isinstance(value, list):
+        return [float(x) for x in value]
+    s = str(value).strip()
+    if not s:
+        return None
+    if s.startswith("[") and s.endswith("]"):
+        s = s[1:-1]
+    if not s:
+        return []
+    try:
+        return [float(x) for x in s.split(",")]
+    except ValueError:
+        return None
 
 
 def _diff_attributes(old: dict[str, Any], new: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -138,10 +174,60 @@ class GraphRepository:
             raise ValueError(
                 "SUPABASE_DB_URL ausente — preencha .env com a connection string do Postgres."
             )
-        self._conn = psycopg.connect(dsn, autocommit=False, row_factory=dict_row)
-        with self._conn.cursor() as cur:
+        self._dsn = dsn
+        self._conn = self._open_connection()
+
+    def _open_connection(self) -> psycopg.Connection:
+        # TCP keepalives são essenciais com Supabase: sem eles, uma chamada LLM
+        # longa (>30s) deixa o socket idle, o pooler mata, e a próxima escrita
+        # falha com `server closed the connection unexpectedly`.
+        conn = psycopg.connect(
+            self._dsn,
+            autocommit=False,
+            row_factory=dict_row,
+            keepalives=1,
+            keepalives_idle=20,
+            keepalives_interval=10,
+            keepalives_count=3,
+        )
+        with conn.cursor() as cur:
             cur.execute(self.SCHEMA_SETUP)
-        self._conn.commit()
+        conn.commit()
+        return conn
+
+    def _ensure_alive(self) -> None:
+        """Ping leve; reabre a conexão se cair. Chamado no topo das escritas.
+
+        Loga via `_log.warning` quando reabre — evidência se o bug de
+        idle-timeout/pooler-kill voltar.
+        """
+        if self._conn.closed:
+            old_pid = _safe_backend_pid(self._conn)
+            self._conn = self._open_connection()
+            _log.warning(
+                "[_ensure_alive] conexão estava morta (closed=True), reabrindo "
+                "(old_pid=%s new_pid=%s)",
+                old_pid,
+                self._conn.info.backend_pid,
+            )
+            return
+        try:
+            with self._conn.cursor() as cur:
+                cur.execute("SELECT 1;")
+        except (psycopg.OperationalError, psycopg.InterfaceError) as exc:
+            old_pid = _safe_backend_pid(self._conn)
+            try:
+                self._conn.close()
+            except Exception:
+                pass
+            self._conn = self._open_connection()
+            _log.warning(
+                "[_ensure_alive] conexão estava morta (SELECT 1 falhou: %s), "
+                "reabrindo (old_pid=%s new_pid=%s)",
+                type(exc).__name__,
+                old_pid,
+                self._conn.info.backend_pid,
+            )
 
     def close(self) -> None:
         if not self._conn.closed:
@@ -170,6 +256,7 @@ class GraphRepository:
 
         Se `source_id` já existe, atualiza apenas `processed_at` para refletir reprocessamento.
         """
+        self._ensure_alive()
         with self._conn.cursor() as cur:
             cur.execute(self.SCHEMA_SETUP)
             cur.execute(
@@ -223,6 +310,7 @@ class GraphRepository:
         compartilham poucos trigramas e ficavam de fora com 0.3.
         """
         vec_literal = _vector_literal(embedding)
+        self._ensure_alive()
         with self._conn.cursor() as cur:
             cur.execute(self.SCHEMA_SETUP)
             cur.execute(
@@ -285,6 +373,7 @@ class GraphRepository:
         canonical = entity.canonical_name
         aliases = list(entity.aliases or [])
 
+        self._ensure_alive()
         with self._conn.cursor() as cur:
             cur.execute(self.SCHEMA_SETUP)
             cur.execute(
@@ -356,6 +445,7 @@ class GraphRepository:
         - `canonical_name` só é trocado se o novo for mais longo (heurística simples
           de "nome mais completo gana"). Não gera evento próprio.
         """
+        self._ensure_alive()
         with self._conn.cursor() as cur:
             cur.execute(self.SCHEMA_SETUP)
             cur.execute(
@@ -458,6 +548,7 @@ class GraphRepository:
         occurred_at: datetime,
     ) -> UUID:
         """Insere evento avulso (uso para `entity_merged` e similares)."""
+        self._ensure_alive()
         with self._conn.cursor() as cur:
             cur.execute(self.SCHEMA_SETUP)
             cur.execute(
@@ -504,6 +595,7 @@ class GraphRepository:
         if from_entity == to_entity:
             return None
 
+        self._ensure_alive()
         with self._conn.cursor() as cur:
             cur.execute(self.SCHEMA_SETUP)
             cur.execute(
@@ -557,6 +649,7 @@ class GraphRepository:
     # ------------------------------------------------------------------
     def get_entity_history(self, entity_id: UUID) -> list[dict[str, Any]]:
         """Eventos de uma entidade em ordem cronológica."""
+        self._ensure_alive()
         with self._conn.cursor() as cur:
             cur.execute(self.SCHEMA_SETUP)
             cur.execute(
@@ -588,6 +681,7 @@ class GraphRepository:
             params["type"] = entity_type
         sql += " LIMIT %(limit)s;"
 
+        self._ensure_alive()
         with self._conn.cursor() as cur:
             cur.execute(self.SCHEMA_SETUP)
             cur.execute(sql, params)
@@ -595,6 +689,7 @@ class GraphRepository:
 
     def get_full_graph(self) -> dict[str, Any]:
         """Snapshot serializável do grafo inteiro — para visualização e auditoria."""
+        self._ensure_alive()
         with self._conn.cursor() as cur:
             cur.execute(self.SCHEMA_SETUP)
             cur.execute(
@@ -651,6 +746,506 @@ class GraphRepository:
         return snapshot
 
     # ------------------------------------------------------------------
+    # memory / context retrieval (Fase 4)
+    # ------------------------------------------------------------------
+    def find_entities_by_doc_embedding(
+        self,
+        *,
+        embedding: list[float],
+        top_k: int = 15,
+        exclude_types: list[str] | None = None,
+    ) -> list[tuple[EntityRecord, float]]:
+        """Top-K entidades cross-type por cosine similarity ao embedding do documento.
+
+        Retorna `[(EntityRecord, cosine_score)]` ordenado por similaridade decrescente.
+        `exclude_types` permite, por exemplo, esconder `BehavioralPattern` em contextos
+        de extração (LLM não deve ver padrões internos do sistema).
+        """
+        vec_literal = _vector_literal(embedding)
+        sql = (
+            """
+            SELECT id, type, canonical_name, aliases, attributes, current_state, confidence,
+                   1 - (embedding <=> %(vec)s::vector) AS cosine_score
+            FROM hakutaku.entities
+            WHERE embedding IS NOT NULL
+            """
+        )
+        params: dict[str, Any] = {"vec": vec_literal, "k": top_k}
+        if exclude_types:
+            sql += " AND type <> ALL(%(excl)s)"
+            params["excl"] = list(exclude_types)
+        sql += " ORDER BY embedding <=> %(vec)s::vector ASC LIMIT %(k)s;"
+
+        self._ensure_alive()
+        with self._conn.cursor() as cur:
+            cur.execute(self.SCHEMA_SETUP)
+            cur.execute(sql, params)
+            rows = cur.fetchall()
+
+        return [
+            (EntityRecord.from_row(r), float(r.get("cosine_score") or 0.0))
+            for r in rows
+        ]
+
+    def recent_active_entities(self, *, limit: int = 5) -> list[EntityRecord]:
+        """Top-N entidades por `last_updated_at DESC` — sinal de "o que está vivo agora"."""
+        self._ensure_alive()
+        with self._conn.cursor() as cur:
+            cur.execute(self.SCHEMA_SETUP)
+            cur.execute(
+                """
+                SELECT id, type, canonical_name, aliases, attributes, current_state, confidence
+                FROM hakutaku.entities
+                ORDER BY last_updated_at DESC
+                LIMIT %s;
+                """,
+                (limit,),
+            )
+            return [EntityRecord.from_row(r) for r in cur.fetchall()]
+
+    def find_open_questions(self, *, limit: int = 10) -> list[EntityRecord]:
+        """OpenQuestions com state='open' (default — ausência também conta como aberta)."""
+        self._ensure_alive()
+        with self._conn.cursor() as cur:
+            cur.execute(self.SCHEMA_SETUP)
+            cur.execute(
+                """
+                SELECT id, type, canonical_name, aliases, attributes, current_state, confidence
+                FROM hakutaku.entities
+                WHERE type = 'OpenQuestion'
+                  AND COALESCE(current_state->>'state', 'open') = 'open'
+                ORDER BY first_seen_at ASC
+                LIMIT %s;
+                """,
+                (limit,),
+            )
+            return [EntityRecord.from_row(r) for r in cur.fetchall()]
+
+    def find_open_risks(
+        self,
+        *,
+        limit: int = 5,
+        severities: list[str] | None = None,
+    ) -> list[EntityRecord]:
+        """Riscos não-mitigados/aceitos. `severities` filtra (default: high+critical)."""
+        sev = severities or ["high", "critical"]
+        self._ensure_alive()
+        with self._conn.cursor() as cur:
+            cur.execute(self.SCHEMA_SETUP)
+            cur.execute(
+                """
+                SELECT id, type, canonical_name, aliases, attributes, current_state, confidence
+                FROM hakutaku.entities
+                WHERE type = 'Risk'
+                  AND COALESCE(attributes->>'severity', 'medium') = ANY(%s)
+                  AND COALESCE(current_state->>'state', 'identified')
+                      NOT IN ('mitigated', 'accepted')
+                ORDER BY first_seen_at DESC
+                LIMIT %s;
+                """,
+                (sev, limit),
+            )
+            return [EntityRecord.from_row(r) for r in cur.fetchall()]
+
+    def find_active_projects(self, *, limit: int = 5) -> list[EntityRecord]:
+        """Projects com state='active' (default quando ausente)."""
+        self._ensure_alive()
+        with self._conn.cursor() as cur:
+            cur.execute(self.SCHEMA_SETUP)
+            cur.execute(
+                """
+                SELECT id, type, canonical_name, aliases, attributes, current_state, confidence
+                FROM hakutaku.entities
+                WHERE type = 'Project'
+                  AND COALESCE(current_state->>'state', 'active') = 'active'
+                ORDER BY first_seen_at DESC
+                LIMIT %s;
+                """,
+                (limit,),
+            )
+            return [EntityRecord.from_row(r) for r in cur.fetchall()]
+
+    # ------------------------------------------------------------------
+    # cross-source linking (Fase 4)
+    # ------------------------------------------------------------------
+    def list_open_questions_with_embeddings(
+        self,
+        *,
+        exclude_already_answered: bool = True,
+    ) -> list[tuple[EntityRecord, list[float], datetime]]:
+        """Para o cross-linker: questões abertas + embedding parseado + first_seen_at.
+
+        Por default exclui questões que já têm uma aresta `answers` apontando
+        para elas — cross-linker não deve gerar `answers` duplicado quando a
+        extração já capturou um na mesma fonte.
+        """
+        sql = (
+            """
+            SELECT e.id, e.type, e.canonical_name, e.aliases, e.attributes,
+                   e.current_state, e.confidence, e.first_seen_at,
+                   e.embedding::text AS embedding_text
+            FROM hakutaku.entities e
+            WHERE e.type = 'OpenQuestion'
+              AND e.embedding IS NOT NULL
+              AND COALESCE(e.current_state->>'state', 'open') = 'open'
+            """
+        )
+        if exclude_already_answered:
+            sql += (
+                "  AND NOT EXISTS (\n"
+                "      SELECT 1 FROM hakutaku.relations r\n"
+                "      WHERE r.relation_type = 'answers' AND r.to_entity = e.id\n"
+                "  )\n"
+            )
+        sql += " ORDER BY e.first_seen_at ASC;"
+
+        self._ensure_alive()
+        with self._conn.cursor() as cur:
+            cur.execute(self.SCHEMA_SETUP)
+            cur.execute(sql)
+            rows = cur.fetchall()
+
+        out: list[tuple[EntityRecord, list[float], datetime]] = []
+        for r in rows:
+            emb = _parse_vector(r.get("embedding_text"))
+            if emb is None:
+                continue
+            out.append((EntityRecord.from_row(r), emb, r["first_seen_at"]))
+        return out
+
+    def find_decision_candidates_for_question(
+        self,
+        *,
+        question_first_seen_at: datetime,
+        question_embedding: list[float],
+        top_k: int = 3,
+        min_cosine: float = 0.5,
+    ) -> list[tuple[EntityRecord, float, datetime]]:
+        """Decisions criadas APÓS uma OpenQuestion, ordenadas por cosine similarity.
+
+        Filtragem temporal estrita: só consideramos `first_seen_at >= question.first_seen_at`
+        (uma decisão tomada antes da pergunta não pode respondê-la).
+        """
+        vec_literal = _vector_literal(question_embedding)
+        self._ensure_alive()
+        with self._conn.cursor() as cur:
+            cur.execute(self.SCHEMA_SETUP)
+            cur.execute(
+                """
+                SELECT id, type, canonical_name, aliases, attributes, current_state,
+                       confidence, first_seen_at,
+                       1 - (embedding <=> %(vec)s::vector) AS cosine_score
+                FROM hakutaku.entities
+                WHERE type = 'Decision'
+                  AND embedding IS NOT NULL
+                  AND first_seen_at >= %(after)s
+                  AND 1 - (embedding <=> %(vec)s::vector) >= %(min_sim)s
+                ORDER BY embedding <=> %(vec)s::vector ASC
+                LIMIT %(k)s;
+                """,
+                {
+                    "vec": vec_literal,
+                    "after": question_first_seen_at,
+                    "min_sim": min_cosine,
+                    "k": top_k,
+                },
+            )
+            rows = cur.fetchall()
+
+        return [
+            (
+                EntityRecord.from_row(r),
+                float(r.get("cosine_score") or 0.0),
+                r["first_seen_at"],
+            )
+            for r in rows
+        ]
+
+    def get_entity_source_excerpt(self, entity_id: UUID) -> str | None:
+        """Source_excerpt do `entity_created` event — útil para reapresentar
+        contexto da entidade fora da fonte original (ex.: cross-linker).
+        """
+        self._ensure_alive()
+        with self._conn.cursor() as cur:
+            cur.execute(self.SCHEMA_SETUP)
+            cur.execute(
+                """
+                SELECT source_excerpt FROM hakutaku.events
+                WHERE entity_id = %s AND event_type = 'entity_created'
+                ORDER BY occurred_at ASC LIMIT 1;
+                """,
+                (str(entity_id),),
+            )
+            row = cur.fetchone()
+        return (row or {}).get("source_excerpt")
+
+    def transition_state(
+        self,
+        *,
+        entity_id: UUID,
+        new_state: str,
+        trigger: str,
+        source_id: UUID | None = None,
+        source_excerpt: str | None = None,
+        occurred_at: datetime | None = None,
+    ) -> str | None:
+        """Atualiza `current_state.state` e emite `status_changed`. Retorna estado anterior.
+
+        Idempotente: se `new_state` já é o atual, não escreve nada.
+        """
+        ts = occurred_at or datetime.now(timezone.utc)
+        self._ensure_alive()
+        with self._conn.cursor() as cur:
+            cur.execute(self.SCHEMA_SETUP)
+            cur.execute(
+                "SELECT current_state FROM hakutaku.entities WHERE id = %s;",
+                (str(entity_id),),
+            )
+            row = cur.fetchone()
+            if row is None:
+                raise LookupError(f"Entity {entity_id} não encontrada.")
+            current_state = dict(row.get("current_state") or {})
+            old_state = current_state.get("state")
+            if old_state == new_state:
+                return old_state
+
+            current_state["state"] = new_state
+            cur.execute(
+                """
+                UPDATE hakutaku.entities
+                   SET current_state = %s,
+                       last_updated_at = now()
+                 WHERE id = %s;
+                """,
+                (Jsonb(current_state), str(entity_id)),
+            )
+            cur.execute(
+                """
+                INSERT INTO hakutaku.events
+                    (entity_id, event_type, payload, source_id, source_excerpt, occurred_at)
+                VALUES (%s, %s, %s, %s, %s, %s);
+                """,
+                (
+                    str(entity_id),
+                    EventType.STATUS_CHANGED.value,
+                    Jsonb({"old_status": old_state, "new_status": new_state, "trigger": trigger}),
+                    str(source_id) if source_id else None,
+                    source_excerpt,
+                    ts,
+                ),
+            )
+        self._conn.commit()
+        return old_state
+
+    # ------------------------------------------------------------------
+    # demo metrics (Fase 4)
+    # ------------------------------------------------------------------
+    def find_duplicate_pairs(
+        self, *, min_similarity: float = 0.8
+    ) -> list[dict[str, Any]]:
+        """Pares de entidades do MESMO tipo com `similarity(canonical_name) > min_similarity`.
+
+        Retorna brutos — caller (demo) aplica filtro conservador (alias overlap,
+        severity match etc.) por tipo.
+        """
+        self._ensure_alive()
+        with self._conn.cursor() as cur:
+            cur.execute(self.SCHEMA_SETUP)
+            cur.execute(
+                """
+                SELECT
+                    e1.id AS id1, e1.type AS type1,
+                    e1.canonical_name AS name1, e1.aliases AS aliases1,
+                    e1.attributes AS attrs1, e1.current_state AS state1,
+                    e2.id AS id2, e2.type AS type2,
+                    e2.canonical_name AS name2, e2.aliases AS aliases2,
+                    e2.attributes AS attrs2, e2.current_state AS state2,
+                    similarity(e1.canonical_name, e2.canonical_name) AS sim
+                FROM hakutaku.entities e1
+                JOIN hakutaku.entities e2
+                  ON e1.id < e2.id
+                 AND e1.type = e2.type
+                WHERE similarity(e1.canonical_name, e2.canonical_name) > %s
+                ORDER BY sim DESC;
+                """,
+                (min_similarity,),
+            )
+            return list(cur.fetchall())
+
+    def count_cross_source_relations(self) -> int:
+        """Relações onde os dois endpoints foram criados em sources diferentes.
+
+        Sinal forte de aprendizado: o sistema percebeu que entidades de docs
+        distintos pertencem ao mesmo grafo e ligou-as.
+
+        Implementação: `DISTINCT ON (entity_id) ... ORDER BY entity_id, occurred_at`
+        em vez de `MIN(source_id)` — Postgres não tem agregação MIN/MAX para UUID,
+        e mesmo se tivesse, MIN textual não respeitaria ordem temporal. DISTINCT ON
+        pega a primeira linha por entity_id na ordem cronológica.
+        """
+        self._ensure_alive()
+        with self._conn.cursor() as cur:
+            cur.execute(self.SCHEMA_SETUP)
+            cur.execute(
+                """
+                WITH first_source AS (
+                    SELECT DISTINCT ON (entity_id)
+                           entity_id, source_id AS first_source_id
+                    FROM hakutaku.events
+                    WHERE event_type = 'entity_created' AND source_id IS NOT NULL
+                    ORDER BY entity_id, occurred_at ASC, recorded_at ASC
+                )
+                SELECT COUNT(*) AS n
+                FROM hakutaku.relations r
+                JOIN first_source f1 ON f1.entity_id = r.from_entity
+                JOIN first_source f2 ON f2.entity_id = r.to_entity
+                WHERE f1.first_source_id IS DISTINCT FROM f2.first_source_id;
+                """
+            )
+            row = cur.fetchone()
+        return int((row or {}).get("n", 0))
+
+    def count_haiku_resolver_calls(self) -> int:
+        """Quantos merges precisaram de Haiku — proxy do custo de ambiguidade.
+
+        Quando o context block ajuda, o resolver auto-decide mais (auto_high)
+        e este número CAI. É a métrica `haiku_calls_economizadas` da Fase 4.
+        """
+        self._ensure_alive()
+        with self._conn.cursor() as cur:
+            cur.execute(self.SCHEMA_SETUP)
+            cur.execute(
+                """
+                SELECT COUNT(*) AS n
+                FROM hakutaku.events
+                WHERE event_type = 'entity_merged'
+                  AND payload->>'decision_method' = 'llm';
+                """
+            )
+            row = cur.fetchone()
+        return int((row or {}).get("n", 0))
+
+    def count_resolver_decisions_by_method(self) -> dict[str, int]:
+        """Distribuição de `decision_method` em eventos `entity_merged`."""
+        self._ensure_alive()
+        with self._conn.cursor() as cur:
+            cur.execute(self.SCHEMA_SETUP)
+            cur.execute(
+                """
+                SELECT payload->>'decision_method' AS method, COUNT(*) AS n
+                FROM hakutaku.events
+                WHERE event_type = 'entity_merged'
+                GROUP BY method;
+                """
+            )
+            return {str(r["method"]): int(r["n"]) for r in cur.fetchall()}
+
+    # ------------------------------------------------------------------
+    # proposals (Fase 5)
+    # ------------------------------------------------------------------
+    def insert_proposal(
+        self,
+        *,
+        proposal_type: str,
+        title: str,
+        description: str,
+        justification: dict[str, Any],
+        priority: int,
+        related_entities: list[UUID],
+    ) -> UUID:
+        """Persiste uma proposta gerada pelo módulo de raciocínio.
+
+        `related_entities` deve conter UUIDs já validados contra o grafo
+        (filtragem feita pelo orchestrator para descartar IDs alucinados).
+        """
+        self._ensure_alive()
+        with self._conn.cursor() as cur:
+            cur.execute(self.SCHEMA_SETUP)
+            cur.execute(
+                """
+                INSERT INTO hakutaku.proposals
+                    (proposal_type, title, description, justification, priority,
+                     related_entities)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                RETURNING id;
+                """,
+                (
+                    proposal_type,
+                    title,
+                    description,
+                    Jsonb(justification or {}),
+                    int(priority),
+                    [str(e) for e in (related_entities or [])],
+                ),
+            )
+            row = cur.fetchone()
+        self._conn.commit()
+        assert row is not None
+        return row["id"]
+
+    def list_proposals(
+        self,
+        *,
+        status: str | None = None,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        """Lista propostas (default: todas), ordenadas por priority desc, created_at desc."""
+        self._ensure_alive()
+        params: list[Any] = []
+        sql = (
+            "SELECT id, proposal_type, title, description, justification, priority, "
+            "       status, related_entities, created_at "
+            "FROM hakutaku.proposals "
+        )
+        if status:
+            sql += "WHERE status = %s "
+            params.append(status)
+        sql += "ORDER BY priority DESC, created_at DESC LIMIT %s;"
+        params.append(int(limit))
+        with self._conn.cursor() as cur:
+            cur.execute(self.SCHEMA_SETUP)
+            cur.execute(sql, params)
+            return list(cur.fetchall())
+
+    def clear_proposals(self) -> int:
+        """Remove TODAS as propostas. Usado pelo reasoning orchestrator
+        quando `clear_existing=True`. Retorna # de linhas deletadas."""
+        self._ensure_alive()
+        with self._conn.cursor() as cur:
+            cur.execute(self.SCHEMA_SETUP)
+            cur.execute("DELETE FROM hakutaku.proposals;")
+            n = cur.rowcount
+        self._conn.commit()
+        return int(n or 0)
+
+    # ------------------------------------------------------------------
+    # cross-source / answers (Fase 4)
+    # ------------------------------------------------------------------
+    def list_answers_relations(self) -> list[dict[str, Any]]:
+        """Relações `answers` com nomes/excerpts dos dois endpoints — para apresentação."""
+        self._ensure_alive()
+        with self._conn.cursor() as cur:
+            cur.execute(self.SCHEMA_SETUP)
+            cur.execute(
+                """
+                SELECT r.id AS rel_id, r.from_entity, r.to_entity,
+                       r.attributes AS rel_attrs, r.confidence AS rel_confidence,
+                       d.canonical_name AS decision_name,
+                       d.attributes->>'rationale' AS decision_rationale,
+                       q.canonical_name AS question_name,
+                       q.current_state->>'state' AS question_state,
+                       q.first_seen_at AS question_first_seen,
+                       d.first_seen_at AS decision_first_seen
+                FROM hakutaku.relations r
+                JOIN hakutaku.entities d ON d.id = r.from_entity
+                JOIN hakutaku.entities q ON q.id = r.to_entity
+                WHERE r.relation_type = 'answers'
+                ORDER BY r.created_at ASC;
+                """
+            )
+            return list(cur.fetchall())
+
+    # ------------------------------------------------------------------
     # llm_calls — sink consumido pelo LLMClient
     # ------------------------------------------------------------------
     def insert_llm_call(self, record: dict[str, Any]) -> None:
@@ -663,7 +1258,13 @@ class GraphRepository:
         conexão antes de re-levantar — caso contrário o psycopg deixa a transação
         em estado abortado e a próxima query falha com `InFailedSqlTransaction`.
         O chamador (LLMClient._log_call) captura, loga em stderr e segue.
+
+        IMPORTANTE: este método é chamado pelo `LLMClient` *imediatamente* após
+        chamadas LLM longas (>30s). Sem `_ensure_alive()` aqui, a conexão pode
+        ter morrido por idle durante o LLM call e a primeira escrita falha. Foi
+        a causa do `server closed unexpectedly` no run 1 do `demo_learning`.
         """
+        self._ensure_alive()
         try:
             with self._conn.cursor() as cur:
                 cur.execute(self.SCHEMA_SETUP)
@@ -700,6 +1301,7 @@ class GraphRepository:
 
     def stats(self) -> dict[str, int]:
         """Contagens rápidas para CLI/log."""
+        self._ensure_alive()
         with self._conn.cursor() as cur:
             cur.execute(self.SCHEMA_SETUP)
             cur.execute("SELECT COUNT(*) AS n FROM hakutaku.entities;")
@@ -715,23 +1317,70 @@ class GraphRepository:
         }
 
     def truncate_all(self) -> None:
-        """Limpa todas as tabelas do schema. Uso EXCLUSIVO de scripts de reset."""
-        with self._conn.cursor() as cur:
-            cur.execute(self.SCHEMA_SETUP)
-            cur.execute(
-                """
-                TRUNCATE
-                  hakutaku.events,
-                  hakutaku.relations,
-                  hakutaku.entities,
-                  hakutaku.proposals,
-                  hakutaku.patterns,
-                  hakutaku.llm_calls,
-                  hakutaku.sources
-                RESTART IDENTITY CASCADE;
-                """
+        """Limpa todas as tabelas do schema (uso EXCLUSIVO de scripts de reset).
+
+        Estratégia padrão: ``TRUNCATE ... RESTART IDENTITY CASCADE`` — instantâneo,
+        idiomático, isso é o que o `diag_truncate` validou que funciona limpo via
+        psycopg ↔ Supabase quando a conexão está saudável.
+
+        Fallback: se ``TRUNCATE`` cair com ``OperationalError`` ou
+        ``InterfaceError`` (transitividade observada nos runs 2-3 da Fase 4 —
+        possível Supabase blip ou pooler kill momentâneo), reabre a conexão e
+        tenta DELETE iterativo. DELETE em tabelas vazias roda em <100ms e não
+        toma ACCESS EXCLUSIVE. O `WARNING` log fica como evidência empírica
+        para refinarmos a regra depois com mais ocorrências.
+        """
+        self._ensure_alive()
+
+        truncate_sql = """
+            TRUNCATE
+              hakutaku.events,
+              hakutaku.relations,
+              hakutaku.entities,
+              hakutaku.proposals,
+              hakutaku.patterns,
+              hakutaku.llm_calls,
+              hakutaku.sources
+            RESTART IDENTITY CASCADE;
+        """
+
+        try:
+            with self._conn.cursor() as cur:
+                cur.execute(self.SCHEMA_SETUP)
+                cur.execute(truncate_sql)
+            self._conn.commit()
+            return
+        except (psycopg.OperationalError, psycopg.InterfaceError) as exc:
+            _log.warning(
+                "[truncate_all] TRUNCATE CASCADE falhou (%s: %s), "
+                "reabrindo conexão e usando DELETE iterativo como fallback.",
+                type(exc).__name__,
+                str(exc)[:200],
             )
-        self._conn.commit()
+            try:
+                self._conn.rollback()
+            except Exception:
+                pass
+            try:
+                self._conn.close()
+            except Exception:
+                pass
+            self._conn = self._open_connection()
+
+            ordered_tables = [
+                "events",
+                "relations",
+                "proposals",
+                "patterns",
+                "llm_calls",
+                "entities",
+                "sources",
+            ]
+            with self._conn.cursor() as cur:
+                cur.execute(self.SCHEMA_SETUP)
+                for table in ordered_tables:
+                    cur.execute(f"DELETE FROM hakutaku.{table};")
+            self._conn.commit()
 
 
 # =====================================================================

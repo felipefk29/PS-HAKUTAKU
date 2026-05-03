@@ -82,6 +82,7 @@ data/extractions/*
 data/graph_snapshots/*
 data/proposals/*
 data/logs/**/*
+data/cache/**/*
 !data/extractions/.gitkeep
 !data/graph_snapshots/.gitkeep
 !data/proposals/.gitkeep

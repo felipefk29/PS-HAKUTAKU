@@ -32,6 +32,14 @@ from hakutaku.schemas.entities import (
 )
 from hakutaku.schemas.events import Event, EventType
 from hakutaku.schemas.extraction import ExtractedContent, ExtractionResult
+from hakutaku.schemas.proposals import (
+    EntityRef,
+    Finding,
+    Proposal,
+    ProposalsBatch,
+    ProposalStatus,
+    ProposalType,
+)
 from hakutaku.schemas.relations import ProposedRelation, Relation, RelationType
 
 __all__ = [
@@ -47,16 +55,22 @@ __all__ = [
     "Dependency",
     "DependencyState",
     "Entity",
+    "EntityRef",
     "Event",
     "EventType",
     "ExtractedContent",
     "ExtractionResult",
+    "Finding",
     "OpenQuestion",
     "OpenQuestionState",
     "Person",
     "Priority",
     "Project",
     "ProjectState",
+    "Proposal",
+    "ProposalStatus",
+    "ProposalType",
+    "ProposalsBatch",
     "ProposedRelation",
     "Relation",
     "RelationType",

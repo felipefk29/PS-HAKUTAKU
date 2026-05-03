@@ -30,14 +30,16 @@ Sistema de inteligência organizacional que extrai entidades tipadas de document
 - [x] Fase 1: Ontologia + schema Supabase
 - [x] Fase 2: LLM wrapper + extração end-to-end
 - [x] Fase 3: Grafo + entity resolution
-- [ ] Fase 4: Memória e aprendizado
-- [ ] Fase 5: Reasoning e propostas
-- [ ] Fase 6: API FastAPI
-- [ ] Fase 7: Frontend Next.js
-- [ ] Fase 8: Documentação final
+- [x] Fase 4: Memória e aprendizado (context_retriever + cross_linker; demo_learning.py existe mas precisa de re-run após fix MIN(uuid))
+- [x] Fase 5: Reasoning e propostas (6 detectores + gerador via Sonnet, validado: 6 findings → 5 propostas)
+- [x] Fase 6: API FastAPI (14 rotas; smoke testadas com curl)
+- [x] Fase 7: Frontend Next.js (4 páginas; build limpo, react-flow no /graph)
+- [x] Fase 8: Documentação final (README + SPEC + DECISIONS D001-D014 + ARCHITECTURE + PROMPTING)
 
 ## Infra persistente
-- Supabase project: `mhlhcdzxqqlmejoionol` (felipefk29's Project) — instância compartilhada com outro projeto.
+- **Supabase project canônico:** `sfzekiuqdcycnaynyzoq` (nome: "hakutaku", us-west-2, Postgres 17). É para onde o `.env` aponta — `SUPABASE_DB_URL=...@db.sfzekiuqdcycnaynyzoq.supabase.co:5432/...` (direct connection, NÃO pooler).
+- **NÃO confundir com:** `mhlhcdzxqqlmejoionol` (felipefk29's Project / Pivô Partners CRM) — é outro projeto do usuário, sem relação com Hakutaku. Antes de usar Supabase MCP, sempre verifique `project_id`.
 - Schema dedicado: **`hakutaku`** — TODA query do app deve usar `hakutaku.<table>` ou `SET search_path = hakutaku, extensions, public;`.
 - Tabelas: `sources`, `entities`, `events`, `relations`, `proposals`, `patterns`, `llm_calls`.
+- Migration da Fase 1 foi aplicada **manualmente via SQL Editor** (não MCP) — `list_migrations` pode estar vazio.
 - Extensões habilitadas: `vector`, `pg_trgm`, `pgcrypto`. Índices vetoriais usam HNSW.

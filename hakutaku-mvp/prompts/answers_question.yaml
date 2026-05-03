@@ -1,0 +1,80 @@
+version: "1.0.0"
+description: |
+  Cross-source linking (Fase 4 / D013): decide se uma `Decision` registrada em
+  um documento POSTERIOR responde uma `OpenQuestion` levantada em documento
+  ANTERIOR. Modelo alvo: Claude Haiku 4.5. Output Pydantic via instructor.
+
+  É chamado APENAS para pares pré-filtrados por (a) ordem temporal estrita
+  (decision.first_seen_at >= question.first_seen_at) e (b) cosine similarity
+  acima de threshold. O LLM age como veredito final, não como busca.
+
+system: |
+  Você decide se uma decisão tomada em um documento posterior responde uma
+  pergunta aberta levantada em um documento anterior. Seja CONSERVADOR — na
+  dúvida, responda "no".
+
+  ============================================================
+  ## Critério
+  ============================================================
+
+  A decisão SÓ responde a pergunta se:
+  1. **Mesmo objeto/escopo** — referem-se à mesma entidade (mesmo sistema,
+     mesmo cliente, mesmo entregável). Decisões e perguntas sobre objetos
+     distintos NÃO se conectam, mesmo que tenham vocabulário parecido.
+  2. **Endereçamento direto** — a decisão escolhe entre as alternativas que
+     a pergunta apresenta, OU define o caminho que a pergunta pedia.
+  3. **Tangencial NÃO É resposta** — uma decisão que apenas TOCA no tema
+     da pergunta sem fechá-la não é resposta.
+
+  ============================================================
+  ## Exemplos
+  ============================================================
+
+  Exemplo POSITIVO (yes):
+  - Pergunta (doc1): "Vamos usar REST ou GraphQL para a integração com TechNova?"
+  - Decisão (doc2): "Decidimos seguir com REST API para a integração TechNova,
+    GraphQL ficou fora de escopo."
+  → yes (mesmo escopo, escolhe entre as alternativas, fecha).
+
+  Exemplo NEGATIVO (no):
+  - Pergunta (doc1): "Vamos usar REST ou GraphQL?"
+  - Decisão (doc2): "Decidimos contratar mais um engenheiro backend."
+  → no (decisão não endereça a pergunta, mesmo que mencione backend).
+
+  Exemplo MAYBE (raro — só quando a evidência sugere mas não é definitiva):
+  - Pergunta (doc1): "Como vamos tratar o rate limit?"
+  - Decisão (doc2): "Vamos usar a API REST padrão por enquanto."
+  → maybe (decidiu o cliente mas não falou explicitamente de rate limit).
+
+  ============================================================
+  ## Confidence calibrado
+  ============================================================
+  - 0.9-1.0 — match óbvio (decisão menciona a pergunta diretamente, ou nomeia
+    a alternativa pela qual a pergunta pediu).
+  - 0.7-0.89 — match plausível com pelo menos dois sinais convergentes
+    (mesmo objeto + linguagem performativa de fechamento).
+  - 0.5-0.69 — match plausível com sinais escassos.
+  - < 0.5 — não responde, escolha "no".
+
+user: |
+  ## Pergunta aberta (documento anterior)
+
+  - Texto: "{question_text}"
+  - Levantada em: {question_first_seen}
+  - Trecho do source: "{question_excerpt}"
+
+  ## Decisão candidata (documento posterior)
+
+  - Texto: "{decision_text}"
+  - Decidida em: {decision_first_seen}
+  - Rationale: "{decision_rationale}"
+  - Trecho do source: "{decision_excerpt}"
+
+  ## Veredito
+
+  Esta decisão responde esta pergunta? Aplique o critério. Em caso de dúvida
+  razoável, responda "no" — falsos positivos poluem o grafo, falsos negativos
+  só deixam uma pergunta aberta que pode ser linkada depois.
+
+  Responda via Pydantic — campos: `verdict` (yes/no/maybe), `confidence` (0-1),
+  `reason` (1-2 frases citando o sinal usado).

@@ -147,8 +147,15 @@ class LLMClient:
         stage: str,
         max_tokens: int = 4096,
         temperature: float = 0.0,
+        log_extras: dict[str, Any] | None = None,
     ) -> tuple[T, dict[str, Any]]:
         """Chama Claude com `instructor` e devolve o Pydantic já validado.
+
+        Args:
+            log_extras: campos adicionais a anexar no JSON de log e no record do
+                DB sink (ex.: `prompt_template_version`, `context_block_excerpt`,
+                `context_entities_count`). Persistidos para auditoria — não
+                afetam o output do LLM.
 
         Returns:
             Tupla `(parsed_model, call_metadata)`.
@@ -175,6 +182,7 @@ class LLMClient:
                 input_payload={"system": system, "user": user},
                 output_payload=cached["output"],
                 meta=meta,
+                extras=log_extras,
             )
             return parsed, meta
 
@@ -216,6 +224,7 @@ class LLMClient:
             input_payload={"system": system, "user": user},
             output_payload=output_dict,
             meta=meta,
+            extras=log_extras,
         )
         return parsed, meta
 
@@ -389,12 +398,13 @@ class LLMClient:
         input_payload: dict[str, Any],
         output_payload: Any,
         meta: dict[str, Any],
+        extras: dict[str, Any] | None = None,
     ) -> None:
         now = datetime.now(timezone.utc)
         day_dir = self._logs_dir / now.strftime("%Y-%m-%d")
         day_dir.mkdir(parents=True, exist_ok=True)
         filename = f"{now.strftime('%H-%M-%S')}_{stage}_{uuid.uuid4().hex[:8]}.json"
-        record = {
+        record: dict[str, Any] = {
             "stage": stage,
             "model": model,
             "input": input_payload,
@@ -406,6 +416,13 @@ class LLMClient:
             "cache_hit": meta["cache_hit"],
             "timestamp": now.isoformat(),
         }
+        if extras:
+            # Extras são MERGED top-level no JSON. Conflito com chaves padrão
+            # (ex.: alguém passar "stage" em extras) é resolvido a favor dos
+            # padrões — não deixamos extras sobrescrever campos canônicos.
+            for k, v in extras.items():
+                if k not in record:
+                    record[k] = v
         with (day_dir / filename).open("w", encoding="utf-8") as fh:
             json.dump(record, fh, ensure_ascii=False, indent=2, default=str)
 

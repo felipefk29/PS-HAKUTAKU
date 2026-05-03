@@ -42,6 +42,8 @@ from hakutaku.config import get_settings  # noqa: E402
 from hakutaku.extraction import extract_from_document  # noqa: E402
 from hakutaku.graph import IngestStats, get_repository, ingest_extraction  # noqa: E402
 from hakutaku.llm.client import get_llm_client  # noqa: E402
+from hakutaku.memory import link_questions_to_decisions  # noqa: E402
+from hakutaku.reasoning import run_reasoning_cycle  # noqa: E402
 
 console = Console()
 
@@ -238,6 +240,23 @@ def main() -> int:
         action="store_true",
         help="Roda extração mas NÃO escreve no Supabase nem gera snapshot.",
     )
+    parser.add_argument(
+        "--cross-link",
+        action="store_true",
+        help=(
+            "Após processar todos os documentos, roda o cross-linker "
+            "(question → decision via Haiku). Default false — habilite só em "
+            "validações finais; cada par candidato custa 1 chamada Haiku."
+        ),
+    )
+    parser.add_argument(
+        "--reason",
+        action="store_true",
+        help=(
+            "Após ingestão (e cross-link, se ativo), roda o ciclo de raciocínio "
+            "(detectores + Sonnet → propostas em hakutaku.proposals)."
+        ),
+    )
     args = parser.parse_args()
 
     base_dir: Path = args.dir
@@ -329,7 +348,14 @@ def main() -> int:
         # (extração + embeddings do resolver + Haiku da resolução de zona cinza).
         llm.set_source_context(doc.source_id)
         try:
-            extraction = extract_from_document(doc, save=True)
+            # Passa o repositório → extractor monta context_block do grafo
+            # acumulado (Fase 4 — extração contextualizada). No primeiro
+            # documento o grafo está vazio e context_block é "" automaticamente.
+            extraction = extract_from_document(
+                doc,
+                repository=(repo if not args.dry_run else None),
+                save=True,
+            )
             _print_extraction_summary(extraction, extraction.call_metadata)
 
             if repo and not args.dry_run:
@@ -350,6 +376,18 @@ def main() -> int:
         for k in ("calls", "input_tokens", "output_tokens", "cost_usd"):
             grand_total[k] += delta[k]
 
+    # Cross-linker opcional — caro (Haiku por par candidato), por isso atrás de flag.
+    if repo and not args.dry_run and args.cross_link:
+        console.rule("[bold magenta]Cross-linker (question → decision)[/]")
+        cross_stats = link_questions_to_decisions(repository=repo, llm=llm)
+        _print_cross_linker_summary(cross_stats)
+
+    # Reasoning cycle opcional — Sonnet sobre findings (Fase 5).
+    if repo and not args.dry_run and args.reason:
+        console.rule("[bold blue]Reasoning cycle (detectores → propostas)[/]")
+        reason_stats = run_reasoning_cycle(repository=repo, llm=llm)
+        _print_reasoning_summary(reason_stats)
+
     if repo and not args.dry_run:
         repo_stats = repo.stats()
     else:
@@ -358,6 +396,56 @@ def main() -> int:
     console.rule("[bold cyan]Fim do pipeline[/]")
     _print_global_summary(len(plan), grand_total, repo_stats)
     return 0
+
+
+def _print_reasoning_summary(stats: Any) -> None:
+    t = Table(title="Reasoning cycle", show_header=True, header_style="bold blue")
+    t.add_column("Métrica")
+    t.add_column("Valor", justify="right")
+    t.add_row("findings detectados", str(stats.findings_count))
+    for det, n in sorted(stats.findings_by_detector.items(), key=lambda x: (-x[1], x[0])):
+        t.add_row(f"  • {det}", str(n))
+    t.add_row("propostas geradas", str(stats.proposals_generated))
+    t.add_row("propostas persistidas", str(stats.proposals_persisted))
+    for ptype, n in sorted(stats.proposals_by_type.items(), key=lambda x: (-x[1], x[0])):
+        t.add_row(f"  • {ptype}", str(n))
+    if stats.call_metadata:
+        t.add_row("cost (USD)", f"${stats.call_metadata.get('cost_usd', 0):.6f}")
+        t.add_row("latency (ms)", str(stats.call_metadata.get("latency_ms", "—")))
+    console.print(t)
+    if stats.summary:
+        console.print(Panel(stats.summary, title="Resumo do gerador", border_style="blue"))
+    if stats.snapshot_path:
+        console.print(
+            Panel(f"snapshot: {stats.snapshot_path}", title="Artefato", border_style="green")
+        )
+
+
+def _print_cross_linker_summary(cross_stats: Any) -> None:
+    """Imprime resumo do cross-linker — # de perguntas, candidatos, links criados."""
+    t = Table(title="Cross-linker", show_header=True, header_style="bold magenta")
+    t.add_column("Métrica")
+    t.add_column("Valor", justify="right")
+    t.add_row("perguntas consideradas", str(cross_stats.questions_considered))
+    t.add_row("pares candidatos", str(cross_stats.candidate_pairs))
+    t.add_row("chamadas Haiku", str(cross_stats.haiku_calls))
+    t.add_row("verdict yes", str(cross_stats.verdict_yes))
+    t.add_row("verdict no", str(cross_stats.verdict_no))
+    t.add_row("verdict maybe", str(cross_stats.verdict_maybe))
+    t.add_row("links criados", str(cross_stats.links_created))
+    t.add_row("perguntas marcadas answered", str(cross_stats.questions_marked_answered))
+    console.print(t)
+
+    if cross_stats.linked:
+        for link in cross_stats.linked:
+            body = (
+                f"[bold cyan]Pergunta:[/] {link.question_name}\n"
+                f"[bold green]Decisão:[/] {link.decision_name}\n"
+                f"[dim]cosine={link.cosine_similarity:.3f} • "
+                f"verdict_conf={link.verdict_confidence:.2f}[/]\n\n"
+                f"{link.reason}"
+            )
+            console.print(Panel(body, title="Link criado", border_style="green"))
 
 
 if __name__ == "__main__":

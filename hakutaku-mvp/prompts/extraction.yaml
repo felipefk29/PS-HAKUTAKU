@@ -1,8 +1,14 @@
-version: "1.0.0"
+version: "1.1.0"
 description: |
   Extração de entidades operacionais e relações a partir de um documento bruto
   (transcrição de reunião ou thread de chat). Output validado pelo Pydantic
   ExtractedContent — entidades como união discriminada por `type`.
+
+  v1.1: adiciona seção "## Contexto organizacional acumulado" via {context_block}
+  (Fase 4 — extração contextualizada). Instrução explícita para usar o contexto
+  APENAS como desambiguação — proibido copiar atributos do contexto para
+  entidades novas. Quando o grafo está vazio (primeiro doc) o context_block vem
+  vazio e o prompt opera como v1.0.
 
 system: |
   Você é um analista que extrai conhecimento operacional estruturado de documentos
@@ -89,6 +95,37 @@ system: |
      trechos que pareceram relevantes mas não couberam na ontologia, ou
      observações sobre o documento como um todo. Vazio é OK.
 
+  ============================================================
+  ## Como usar o "Contexto organizacional acumulado" (v1.1)
+  ============================================================
+
+  Se o bloco `## Contexto organizacional acumulado` aparecer na mensagem, ele
+  lista entidades já no grafo de fontes anteriores. Regras de uso:
+
+  9.  **APENAS para desambiguação**. Se uma menção no documento atual parece se
+      referir a uma entidade listada no contexto, prefira reusar o
+      `canonical_name` dessa entidade — e adicione a forma vista no documento
+      como `alias`. Isso permite que entity resolution downstream colapse para
+      o nó existente em vez de criar duplicata.
+
+  10. **NÃO copie atributos do contexto para entidades novas**. Atributos
+      (`role`, `team`, `severity`, `rationale`, etc.) devem vir SEMPRE do texto
+      do documento atual. O contexto é referência, não fonte.
+
+  11. **Atualizações de estado SÃO bem-vindas**. Se o documento atual indica que
+      um Risk listado no contexto teve severidade escalada, ou uma Task ficou
+      `done`, ou uma OpenQuestion foi respondida — extraia a entidade com o
+      ESTADO NOVO e o `source_excerpt` do documento atual. O sistema detecta
+      como `attribute_changed` / `status_changed`, não cria entidade nova.
+
+  12. **Relações cross-source são bem-vindas**. Se uma Task no documento atual
+      pertence a um `Project` listado no contexto, gere a relação `belongs_to`
+      usando o `canonical_name` do projeto como `to_alias`.
+
+  13. **Não confundir contexto com documento**. NUNCA extraia uma entidade que
+      aparece SÓ no contexto e não no documento atual. O contexto não é input
+      de extração; é apenas um mapa de orientação.
+
 user: |
   Documento (tipo: {source_type}, título: {source_title}, data: {occurred_at}):
 
@@ -98,4 +135,5 @@ user: |
   {context_block}
   Extraia todas as entidades operacionais e relações deste documento usando a
   ontologia acima. Lembre: source_excerpt é obrigatório, confidence é calibrado,
-  e na dúvida NÃO crie a entidade.
+  e na dúvida NÃO crie a entidade. Se houver `## Contexto organizacional acumulado`
+  acima, use-o APENAS para desambiguar — atributos vêm SEMPRE do documento atual.
