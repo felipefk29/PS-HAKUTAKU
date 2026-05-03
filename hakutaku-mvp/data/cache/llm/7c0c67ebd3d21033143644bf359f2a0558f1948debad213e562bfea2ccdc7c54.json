@@ -1,0 +1,17 @@
+{
+  "output": {
+    "action": "merge",
+    "target_id": "fd5001a2-70c3-4816-b5ec-20ce153fae22",
+    "confidence": 0.85,
+    "reasoning": "Ambas as decisões tratam da escolha entre REST e GraphQL para a API TechNova, com rationale convergente (simplicidade/curva de aprendizado). Apesar do canonical_name parafraseado e datas próximas (3 dias de diferença), o escopo (cliente TechNova, mesma decisão arquitetural) e alternativas consideradas (GraphQL) apontam para o mesmo nó. A segunda entrada formaliza a decisão já registrada na primeira."
+  },
+  "meta": {
+    "input_tokens": 2544,
+    "output_tokens": 224,
+    "cost_usd": 0.003664,
+    "latency_ms": 2578,
+    "cache_hit": false
+  },
+  "model": "claude-haiku-4-5",
+  "stage": "entity_resolution"
+}

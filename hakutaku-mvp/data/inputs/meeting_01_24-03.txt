@@ -1,0 +1,37 @@
+Reunião: Kickoff conta TechNova
+Data: 2026-03-24
+Participantes: Marina Costa, Pedro Silva, João Almeida, Beatriz Lima
+
+[10:00] Marina Costa: Bom dia, gente. Hoje vamos alinhar o plano dos próximos 30 dias na conta TechNova. A TechNova é nosso cliente enterprise tier 1 e o renovo deles é em julho.
+
+[10:02] Pedro Silva: Pra contextualizar quem chegou agora: a TechNova entrou em janeiro, contrato anual. O account owner sou eu. O risco aqui é que eles abriram dois tickets críticos no último mês e o tempo de resposta médio nosso ficou em 36h, contra os 8h do SLA.
+
+[10:05] Marina Costa: Esse é exatamente o ponto. Eu queria chamar isso explicitamente como um risco de churn — tô preocupada que a gente não esteja vendo o problema do tamanho que ele é. Vou colocar como severity alto por enquanto.
+
+[10:07] João Almeida: Concordo, severidade alta faz sentido. Acho que precisamos de um plano de ação concreto antes do dia 15/04, que é quando o sponsor deles, o Ricardo, faz a review trimestral conosco.
+
+[10:09] Marina Costa: Boa. Pedro, você consegue preparar o deck do QBR até o dia 10/04?
+
+[10:10] Pedro Silva: Consigo sim, fica comigo. Te entrego dia 10/04 sem falta.
+
+[10:12] Beatriz Lima: Uma pergunta que a gente precisa responder antes de fechar o deck: vamos com REST ou GraphQL pra nova API que a TechNova pediu? Eles deixaram em aberto na última call, mas a decisão é nossa.
+
+[10:14] João Almeida: Boa pergunta. Não temos consenso ainda. Eu acho que deveríamos ir de REST por simplicidade, mas a Marina tinha argumento pelo GraphQL.
+
+[10:16] Marina Costa: Sim, eu defendi GraphQL pela flexibilidade do front-end. Mas é debatível, vamos deixar essa pergunta em aberto e decidir até a próxima reunião (28/03). Bea, pode anotar isso como uma open question?
+
+[10:17] Beatriz Lima: Anotado. "REST vs GraphQL para nova API TechNova" — pendente até 28/03.
+
+[10:20] Marina Costa: Last thing: o projeto interno que dá suporte a essa conta é o "Atlas". Atlas é o nome da iniciativa de modernização da plataforma de integração que a gente está rodando há dois meses. Estamos com status ativo, target de entrega em junho.
+
+[10:22] Pedro Silva: Faz sentido. A nova API entra como entregável do Atlas então. Vou adicionar como tarefa.
+
+[10:23] Marina Costa: Perfeito. Então a tarefa "definir spec da nova API TechNova" fica com o Pedro também, deadline 05/04. Prioridade alta por causa do QBR.
+
+[10:25] João Almeida: Mais uma coisa: tem um bloqueio. A definição da spec depende de uma resposta do time de segurança sobre o modelo de auth aceitável. Sem isso, o Pedro não consegue avançar.
+
+[10:26] Marina Costa: Beleza, vou registrar isso como dependência. Quem vai destravar do lado de segurança?
+
+[10:27] João Almeida: Falo com a Camila hoje à tarde, ela é a líder de segurança. Te volto até amanhã.
+
+[10:30] Marina Costa: Fechado. Bom trabalho, gente. Próxima reunião 28/03 mesmo horário.

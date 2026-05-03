@@ -1,0 +1,17 @@
+{
+  "output": {
+    "action": "merge",
+    "target_id": "bd82d52e-ecef-4266-ad33-1b40f4d45e74",
+    "confidence": 0.92,
+    "reasoning": "Nome canônico \"Beatriz\" + alias \"Bea\" correspondem exatamente ao candidato \"Beatriz Lima\" que já possui os mesmos aliases. Contexto compatível (ambos em chat corporativo). Heurística 1: variantes de nome próprio apontam para a mesma pessoa quando contexto bate."
+  },
+  "meta": {
+    "input_tokens": 2322,
+    "output_tokens": 187,
+    "cost_usd": 0.003257,
+    "latency_ms": 2297,
+    "cache_hit": false
+  },
+  "model": "claude-haiku-4-5",
+  "stage": "entity_resolution"
+}

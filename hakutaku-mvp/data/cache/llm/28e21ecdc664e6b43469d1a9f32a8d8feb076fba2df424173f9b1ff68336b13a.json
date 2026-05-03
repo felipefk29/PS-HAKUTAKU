@@ -1,0 +1,17 @@
+{
+  "output": {
+    "action": "merge",
+    "target_id": "a683ff5f-2171-4618-8e0c-33ab6e285b35",
+    "confidence": 0.82,
+    "reasoning": "Nomes parafraseados (\"Preparar spec da API TechNova\" vs \"Preparar spec da nova API\") com mesmo escopo (spec da API), mesma prioridade (high), mesmo cliente (TechNova) e estado compatível (in_progress → done). Alias \"spec da nova API\" aparece em ambos. Dois sinais convergentes: nome + contexto."
+  },
+  "meta": {
+    "input_tokens": 2475,
+    "output_tokens": 200,
+    "cost_usd": 0.003475,
+    "latency_ms": 2141,
+    "cache_hit": false
+  },
+  "model": "claude-haiku-4-5",
+  "stage": "entity_resolution"
+}

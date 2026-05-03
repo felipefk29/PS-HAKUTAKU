@@ -1,0 +1,351 @@
+{
+  "output": {
+    "entities": [
+      {
+        "id": null,
+        "canonical_name": "Marina Costa",
+        "aliases": [
+          "Marina",
+          "marina.costa",
+          "Marina Costa"
+        ],
+        "source_excerpt": "[09:12] Marina: Pessoal, bom dia. [...] [09:20] marina.costa: Convencida pelo argumento de simplicidade.",
+        "confidence": 1.0,
+        "type": "Person",
+        "role": null,
+        "team": null,
+        "email": null,
+        "external_ids": {}
+      },
+      {
+        "id": null,
+        "canonical_name": "Pedro Silva",
+        "aliases": [
+          "Pedro",
+          "Pedro Silva"
+        ],
+        "source_excerpt": "[09:14] Pedro Silva: Boa, obrigado Marina. Vou começar a spec hoje.",
+        "confidence": 1.0,
+        "type": "Person",
+        "role": null,
+        "team": null,
+        "email": null,
+        "external_ids": {}
+      },
+      {
+        "id": null,
+        "canonical_name": "João Almeida",
+        "aliases": [
+          "joao.almeida",
+          "João Almeida"
+        ],
+        "source_excerpt": "[09:18] joao.almeida: Falei com o time de eng e olhei o stack atual.",
+        "confidence": 1.0,
+        "type": "Person",
+        "role": null,
+        "team": null,
+        "email": null,
+        "external_ids": {}
+      },
+      {
+        "id": null,
+        "canonical_name": "Beatriz",
+        "aliases": [
+          "Beatriz",
+          "Bea"
+        ],
+        "source_excerpt": "[09:20] marina.costa: [...] Bea, atualiza a anotação por favor. [09:21] Beatriz: Atualizado.",
+        "confidence": 1.0,
+        "type": "Person",
+        "role": null,
+        "team": null,
+        "email": null,
+        "external_ids": {}
+      },
+      {
+        "id": null,
+        "canonical_name": "Camila",
+        "aliases": [
+          "Camila"
+        ],
+        "source_excerpt": "[09:12] Marina: [...] A Camila respondeu sobre o modelo de auth pra API da TechNova. Ela aprovou OAuth2 + JWT",
+        "confidence": 1.0,
+        "type": "Person",
+        "role": null,
+        "team": null,
+        "email": null,
+        "external_ids": {}
+      },
+      {
+        "id": null,
+        "canonical_name": "TechNova",
+        "aliases": [
+          "TechNova"
+        ],
+        "source_excerpt": "[09:12] Marina: [...] A Camila respondeu sobre o modelo de auth pra API da TechNova.",
+        "confidence": 1.0,
+        "type": "Client",
+        "client_type": "customer",
+        "tier": null,
+        "account_owner_alias": null,
+        "state": "active"
+      },
+      {
+        "id": null,
+        "canonical_name": "Adotar OAuth2 + JWT para autenticação da API TechNova",
+        "aliases": [
+          "modelo de auth pra API da TechNova",
+          "OAuth2 + JWT"
+        ],
+        "source_excerpt": "[09:12] Marina: A Camila respondeu sobre o modelo de auth pra API da TechNova. Ela aprovou OAuth2 + JWT, sem necessidade de mTLS.",
+        "confidence": 1.0,
+        "type": "Decision",
+        "rationale": "",
+        "decided_at": "2026-03-25T09:12:00",
+        "reversibility": null,
+        "alternatives_considered": [],
+        "state": "confirmed"
+      },
+      {
+        "id": null,
+        "canonical_name": "Usar REST em vez de GraphQL para API TechNova",
+        "aliases": [
+          "REST vs GraphQL",
+          "REST"
+        ],
+        "source_excerpt": "[09:18] joao.almeida: [...] O peso da curva de aprendizado de GraphQL pra eles é alto. Voto REST. [09:20] marina.costa: Convencida pelo argumento de simplicidade. Vamos fechar como REST então.",
+        "confidence": 1.0,
+        "type": "Decision",
+        "rationale": "O peso da curva de aprendizado de GraphQL pra eles é alto. Argumento de simplicidade.",
+        "decided_at": "2026-03-25T09:20:00",
+        "reversibility": null,
+        "alternatives_considered": [
+          "GraphQL",
+          "REST"
+        ],
+        "state": "confirmed"
+      },
+      {
+        "id": null,
+        "canonical_name": "Preparar spec da API TechNova",
+        "aliases": [
+          "spec da API",
+          "spec"
+        ],
+        "source_excerpt": "[09:14] Pedro Silva: [...] Vou começar a spec hoje. [...] [14:12] Marina: Pedro, deadline da spec da API agora é 30/03.",
+        "confidence": 1.0,
+        "type": "Task",
+        "description": "Especificação da API REST para TechNova",
+        "deadline": "2026-03-30T23:59:59",
+        "priority": "high",
+        "effort_estimate": null,
+        "tags": [],
+        "state": "in_progress",
+        "unowned": false
+      },
+      {
+        "id": null,
+        "canonical_name": "Preparar deck do QBR TechNova",
+        "aliases": [
+          "deck do QBR",
+          "deck"
+        ],
+        "source_excerpt": "[14:07] Marina: Pedro, você consegue antecipar o deck do QBR pra 03/04 em vez de 10/04? [...] [14:08] Pedro Silva: Aperto, mas sim. Te entrego dia 03/04.",
+        "confidence": 1.0,
+        "type": "Task",
+        "description": "Deck de QBR com plano de ação para TechNova",
+        "deadline": "2026-04-03T23:59:59",
+        "priority": "critical",
+        "effort_estimate": null,
+        "tags": [],
+        "state": "in_progress",
+        "unowned": false
+      },
+      {
+        "id": null,
+        "canonical_name": "Atualizar anotação de decisão REST vs GraphQL",
+        "aliases": [
+          "atualiza a anotação"
+        ],
+        "source_excerpt": "[09:20] marina.costa: [...] Bea, atualiza a anotação por favor. [09:21] Beatriz: Atualizado. \"REST vs GraphQL\" → fechada com REST.",
+        "confidence": 1.0,
+        "type": "Task",
+        "description": null,
+        "deadline": null,
+        "priority": "medium",
+        "effort_estimate": null,
+        "tags": [],
+        "state": "done",
+        "unowned": false
+      },
+      {
+        "id": null,
+        "canonical_name": "Churn da TechNova",
+        "aliases": [
+          "risco de churn da TechNova"
+        ],
+        "source_excerpt": "[14:02] Pedro Silva: [...] A TechNova mandou um email hoje dizendo que está avaliando alternativas. Citou a lentidão dos tickets como motivo principal. [14:05] Marina: [...] Então o risco de churn da TechNova subiu de alto pra crítico.",
+        "confidence": 1.0,
+        "type": "Risk",
+        "severity": "critical",
+        "likelihood": "high",
+        "impact_description": "TechNova está avaliando alternativas devido à lentidão dos tickets",
+        "first_raised_at": "2026-03-25T14:02:00",
+        "state": "identified"
+      },
+      {
+        "id": null,
+        "canonical_name": "Pedro entregará deck do QBR em 03/04",
+        "aliases": [
+          "Te entrego dia 03/04"
+        ],
+        "source_excerpt": "[14:07] Marina: Pedro, você consegue antecipar o deck do QBR pra 03/04 em vez de 10/04? [...] [14:08] Pedro Silva: Aperto, mas sim. Te entrego dia 03/04. Fica comigo.",
+        "confidence": 1.0,
+        "type": "Commitment",
+        "committed_by_alias": "Pedro Silva",
+        "committed_to_alias": "Marina",
+        "due_at": "2026-04-03T23:59:59",
+        "state": "pending"
+      },
+      {
+        "id": null,
+        "canonical_name": "Pedro entregará spec da API em 30/03",
+        "aliases": [
+          "Faço"
+        ],
+        "source_excerpt": "[14:12] Marina: Pedro, deadline da spec da API agora é 30/03. Sei que é apertado mas dado o cenário… [14:13] Pedro Silva: Entendi. Faço.",
+        "confidence": 1.0,
+        "type": "Commitment",
+        "committed_by_alias": "Pedro Silva",
+        "committed_to_alias": "Marina",
+        "due_at": "2026-03-30T23:59:59",
+        "state": "pending"
+      },
+      {
+        "id": null,
+        "canonical_name": "REST vs GraphQL para API TechNova",
+        "aliases": [
+          "REST vs GraphQL"
+        ],
+        "source_excerpt": "[09:14] Pedro Silva: [...] Sobre REST vs GraphQL, alguém já tem uma posição mais firme?",
+        "confidence": 1.0,
+        "type": "OpenQuestion",
+        "raised_by_alias": "Pedro Silva",
+        "context": "Decisão sobre arquitetura da API",
+        "state": "answered"
+      }
+    ],
+    "relations": [
+      {
+        "relation_type": "decided_by",
+        "from_alias": "Adotar OAuth2 + JWT para autenticação da API TechNova",
+        "to_alias": "Camila",
+        "from_type": "Decision",
+        "to_type": "Person",
+        "attributes": {},
+        "source_excerpt": "[09:12] Marina: A Camila respondeu sobre o modelo de auth pra API da TechNova. Ela aprovou OAuth2 + JWT",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "decided_by",
+        "from_alias": "Usar REST em vez de GraphQL para API TechNova",
+        "to_alias": "Marina Costa",
+        "from_type": "Decision",
+        "to_type": "Person",
+        "attributes": {},
+        "source_excerpt": "[09:20] marina.costa: Convencida pelo argumento de simplicidade. Vamos fechar como REST então.",
+        "confidence": 0.9
+      },
+      {
+        "relation_type": "assigned_to",
+        "from_alias": "Preparar spec da API TechNova",
+        "to_alias": "Pedro Silva",
+        "from_type": "Task",
+        "to_type": "Person",
+        "attributes": {},
+        "source_excerpt": "[09:12] Marina: [...] Pedro, dá pra avançar com a spec. [09:14] Pedro Silva: Boa, obrigado Marina. Vou começar a spec hoje.",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "assigned_to",
+        "from_alias": "Preparar deck do QBR TechNova",
+        "to_alias": "Pedro Silva",
+        "from_type": "Task",
+        "to_type": "Person",
+        "attributes": {},
+        "source_excerpt": "[14:07] Marina: Pedro, você consegue antecipar o deck do QBR pra 03/04 em vez de 10/04? [...] [14:08] Pedro Silva: Aperto, mas sim. Te entrego dia 03/04.",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "assigned_to",
+        "from_alias": "Atualizar anotação de decisão REST vs GraphQL",
+        "to_alias": "Beatriz",
+        "from_type": "Task",
+        "to_type": "Person",
+        "attributes": {},
+        "source_excerpt": "[09:20] marina.costa: [...] Bea, atualiza a anotação por favor. [09:21] Beatriz: Atualizado.",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "affects",
+        "from_alias": "Churn da TechNova",
+        "to_alias": "TechNova",
+        "from_type": "Risk",
+        "to_type": "Client",
+        "attributes": {},
+        "source_excerpt": "[14:02] Pedro Silva: [...] A TechNova mandou um email hoje dizendo que está avaliando alternativas. [...] [14:05] Marina: [...] o risco de churn da TechNova subiu de alto pra crítico.",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "affects",
+        "from_alias": "Usar REST em vez de GraphQL para API TechNova",
+        "to_alias": "Preparar spec da API TechNova",
+        "from_type": "Decision",
+        "to_type": "Task",
+        "attributes": {},
+        "source_excerpt": "[09:20] marina.costa: Vamos fechar como REST então. [...] [09:24] Pedro Silva: Show. Vou fazer a spec em REST então.",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "commits_to",
+        "from_alias": "Pedro Silva",
+        "to_alias": "Pedro entregará deck do QBR em 03/04",
+        "from_type": "Person",
+        "to_type": "Commitment",
+        "attributes": {},
+        "source_excerpt": "[14:08] Pedro Silva: Aperto, mas sim. Te entrego dia 03/04. Fica comigo.",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "commits_to",
+        "from_alias": "Pedro Silva",
+        "to_alias": "Pedro entregará spec da API em 30/03",
+        "from_type": "Person",
+        "to_type": "Commitment",
+        "attributes": {},
+        "source_excerpt": "[14:13] Pedro Silva: Entendi. Faço.",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "answers",
+        "from_alias": "Usar REST em vez de GraphQL para API TechNova",
+        "to_alias": "REST vs GraphQL para API TechNova",
+        "from_type": "Decision",
+        "to_type": "OpenQuestion",
+        "attributes": {},
+        "source_excerpt": "[09:14] Pedro Silva: Sobre REST vs GraphQL, alguém já tem uma posição mais firme? [...] [09:20] marina.costa: Vamos fechar como REST então.",
+        "confidence": 1.0
+      }
+    ],
+    "notes": "Documento rico em decisões e commitments explícitos. Contexto de escalação de risco (TechNova avaliando alternativas) levou a ajustes de deadline em múltiplas tasks. Menção a \"proposta de oferecer service credit\" no final não foi extraída como entidade porque ainda está em fase de discussão (\"vamos abrir uma proposta\", \"Discutimos hoje\") — não há decisão ou task concreta ainda. Camila aparece como decisor de autenticação mas não há informações suficientes sobre seu papel organizacional além dessa aprovação."
+  },
+  "meta": {
+    "input_tokens": 9218,
+    "output_tokens": 3603,
+    "cost_usd": 0.081699,
+    "latency_ms": 40483,
+    "cache_hit": false
+  },
+  "model": "claude-sonnet-4-5",
+  "stage": "extraction"
+}

@@ -1,0 +1,17 @@
+{
+  "output": {
+    "action": "merge",
+    "target_id": "7a6938b4-7bab-45f0-b2e4-d0c0d3d367c5",
+    "confidence": 0.92,
+    "reasoning": "Nome canônico idêntico (\"Ricardo\"), aliases coincidentes, e contexto compatível (ambos referem-se a sponsor da TechNova). O candidato existente tem trigram=1.0 e cosine=0.831, indicando match muito forte. A nova entidade adiciona o atributo role='sponsor' que enriquece o nó existente."
+  },
+  "meta": {
+    "input_tokens": 1941,
+    "output_tokens": 202,
+    "cost_usd": 0.002951,
+    "latency_ms": 2030,
+    "cache_hit": false
+  },
+  "model": "claude-haiku-4-5",
+  "stage": "entity_resolution"
+}

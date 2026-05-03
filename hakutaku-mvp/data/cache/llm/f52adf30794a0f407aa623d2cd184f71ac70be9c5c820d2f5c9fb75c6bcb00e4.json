@@ -1,0 +1,17 @@
+{
+  "output": {
+    "action": "merge",
+    "target_id": "6dc38e4c-7ff7-4375-8771-603a7a5c81ca",
+    "confidence": 0.95,
+    "reasoning": "Nome canônico idêntico (\"Camila\"), aliases coincidentes, e contexto compatível: ambas referem-se a uma pessoa com papel em segurança/arquitetura (aprovação de OAuth2 + JWT para API). Trigram=1.0 confirma match textual perfeito."
+  },
+  "meta": {
+    "input_tokens": 2429,
+    "output_tokens": 181,
+    "cost_usd": 0.003334,
+    "latency_ms": 1952,
+    "cache_hit": false
+  },
+  "model": "claude-haiku-4-5",
+  "stage": "entity_resolution"
+}

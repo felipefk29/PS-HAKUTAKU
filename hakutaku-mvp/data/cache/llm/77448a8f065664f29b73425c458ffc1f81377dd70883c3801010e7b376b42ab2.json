@@ -1,0 +1,17 @@
+{
+  "output": {
+    "action": "merge",
+    "target_id": "0f7b098d-6764-47ef-b09e-ba24e479b4b9",
+    "confidence": 0.92,
+    "reasoning": "Mesmo cliente (TechNova) e mesmo escopo de risco (churn). Ambas descrevem a ameaça de perda do cliente TechNova por problemas operacionais (SLA/lentidão). A severity mudou de 'high' para 'critical' — atributo que o sistema registrará como mudança, não como entidade nova. Canonical names parafraseados mas contexto idêntico."
+  },
+  "meta": {
+    "input_tokens": 2397,
+    "output_tokens": 213,
+    "cost_usd": 0.003462,
+    "latency_ms": 2437,
+    "cache_hit": false
+  },
+  "model": "claude-haiku-4-5",
+  "stage": "entity_resolution"
+}

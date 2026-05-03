@@ -1,0 +1,17 @@
+{
+  "output": {
+    "action": "merge",
+    "target_id": "de3763d7-fb01-41d3-a4ae-87edbb52c685",
+    "confidence": 0.85,
+    "reasoning": "Mesmo canonical_name parafraseado (\"preparar deck do QBR\" vs \"Preparar deck do QBR TechNova\"), aliases convergentes (\"deck do QBR\"), mesmo owner (Pedro Silva), mesmo estado (in_progress) e escopo idêntico (QBR TechNova). A diferença de deadline (03/04 vs 10/04) reflete a antecipação mencionada no chat, não uma task distinta. Similarity scores altos (0.782 combined) confirmam o match."
+  },
+  "meta": {
+    "input_tokens": 2246,
+    "output_tokens": 231,
+    "cost_usd": 0.003401,
+    "latency_ms": 2469,
+    "cache_hit": false
+  },
+  "model": "claude-haiku-4-5",
+  "stage": "entity_resolution"
+}

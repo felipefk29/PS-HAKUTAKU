@@ -1,0 +1,387 @@
+{
+  "output": {
+    "entities": [
+      {
+        "id": null,
+        "canonical_name": "Marina Costa",
+        "aliases": [
+          "Marina Costa",
+          "Marina"
+        ],
+        "source_excerpt": "Participantes: Marina Costa, Pedro Silva, João Almeida, Beatriz Lima",
+        "confidence": 1.0,
+        "type": "Person",
+        "role": null,
+        "team": null,
+        "email": null,
+        "external_ids": {}
+      },
+      {
+        "id": null,
+        "canonical_name": "Pedro Silva",
+        "aliases": [
+          "Pedro Silva",
+          "Pedro"
+        ],
+        "source_excerpt": "Participantes: Marina Costa, Pedro Silva, João Almeida, Beatriz Lima",
+        "confidence": 1.0,
+        "type": "Person",
+        "role": null,
+        "team": null,
+        "email": null,
+        "external_ids": {}
+      },
+      {
+        "id": null,
+        "canonical_name": "João Almeida",
+        "aliases": [
+          "João Almeida",
+          "João"
+        ],
+        "source_excerpt": "Participantes: Marina Costa, Pedro Silva, João Almeida, Beatriz Lima",
+        "confidence": 1.0,
+        "type": "Person",
+        "role": null,
+        "team": null,
+        "email": null,
+        "external_ids": {}
+      },
+      {
+        "id": null,
+        "canonical_name": "Beatriz Lima",
+        "aliases": [
+          "Beatriz Lima",
+          "Bea"
+        ],
+        "source_excerpt": "Participantes: Marina Costa, Pedro Silva, João Almeida, Beatriz Lima",
+        "confidence": 1.0,
+        "type": "Person",
+        "role": null,
+        "team": null,
+        "email": null,
+        "external_ids": {}
+      },
+      {
+        "id": null,
+        "canonical_name": "Ricardo",
+        "aliases": [
+          "Ricardo"
+        ],
+        "source_excerpt": "Pedro, depois da entrega do deck (03/04), abre uma task pra você apresentar o plano direto pro Ricardo, sponsor da TechNova.",
+        "confidence": 1.0,
+        "type": "Person",
+        "role": "sponsor",
+        "team": null,
+        "email": null,
+        "external_ids": {}
+      },
+      {
+        "id": null,
+        "canonical_name": "TechNova",
+        "aliases": [
+          "TechNova"
+        ],
+        "source_excerpt": "Reunião: Status conta TechNova",
+        "confidence": 1.0,
+        "type": "Client",
+        "client_type": "customer",
+        "tier": null,
+        "account_owner_alias": "Marina Costa",
+        "state": "active"
+      },
+      {
+        "id": null,
+        "canonical_name": "Churn da TechNova",
+        "aliases": [
+          "risco de churn da TechNova"
+        ],
+        "source_excerpt": "o risco de churn da TechNova subiu pra crítico depois do email de quarta. Estamos em modo de ação.",
+        "confidence": 1.0,
+        "type": "Risk",
+        "severity": "critical",
+        "likelihood": null,
+        "impact_description": null,
+        "first_raised_at": null,
+        "state": "identified"
+      },
+      {
+        "id": null,
+        "canonical_name": "Usar REST API para TechNova",
+        "aliases": [
+          "REST API pra TechNova",
+          "vamos com REST API"
+        ],
+        "source_excerpt": "Quero formalizar isso como uma decisão registrada: vamos com REST API pra TechNova. A justificativa foi simplicidade pro time de engenharia, levantada pelo João, e fechada por consenso no chat.",
+        "confidence": 1.0,
+        "type": "Decision",
+        "rationale": "simplicidade pro time de engenharia, levantada pelo João, e fechada por consenso no chat",
+        "decided_at": "2026-03-28T10:05:00",
+        "reversibility": "two_way",
+        "alternatives_considered": [
+          "GraphQL"
+        ],
+        "state": "confirmed"
+      },
+      {
+        "id": null,
+        "canonical_name": "Oferecer 10% de service credit retroativo para TechNova",
+        "aliases": [
+          "10% de service credit retroativo",
+          "service credit"
+        ],
+        "source_excerpt": "Vou registrar como decisão também: oferecer 10% de service credit retroativo pra TechNova como mitigação do risco de churn.",
+        "confidence": 1.0,
+        "type": "Decision",
+        "rationale": "mitigação do risco de churn, dá um sinal forte sem comprometer margem",
+        "decided_at": "2026-03-28T10:18:00",
+        "reversibility": "one_way",
+        "alternatives_considered": [],
+        "state": "confirmed"
+      },
+      {
+        "id": null,
+        "canonical_name": "REST vs GraphQL",
+        "aliases": [
+          "REST vs GraphQL"
+        ],
+        "source_excerpt": "E ela responde aquela pergunta em aberto que eu tinha registrado dia 24, 'REST vs GraphQL'.",
+        "confidence": 1.0,
+        "type": "OpenQuestion",
+        "raised_by_alias": "Beatriz Lima",
+        "context": null,
+        "state": "answered"
+      },
+      {
+        "id": null,
+        "canonical_name": "Plano B se Ricardo rejeitar a proposta de retenção",
+        "aliases": [
+          "plano B se Ricardo rejeitar"
+        ],
+        "source_excerpt": "Bea, anota como pergunta em aberto: 'plano B se Ricardo rejeitar a proposta de retenção'. Ainda sem resposta.",
+        "confidence": 1.0,
+        "type": "OpenQuestion",
+        "raised_by_alias": "João Almeida",
+        "context": "o que a gente faz se o Ricardo rejeitar o plano? Não temos plano B explícito.",
+        "state": "open"
+      },
+      {
+        "id": null,
+        "canonical_name": "Preparar spec da nova API",
+        "aliases": [
+          "spec da nova API"
+        ],
+        "source_excerpt": "Atualizando: a spec da nova API ficou pronta ontem. Foi feita em REST como combinado.",
+        "confidence": 1.0,
+        "type": "Task",
+        "description": null,
+        "deadline": null,
+        "priority": "high",
+        "effort_estimate": null,
+        "tags": [],
+        "state": "done",
+        "unowned": false
+      },
+      {
+        "id": null,
+        "canonical_name": "Preparar deck do QBR",
+        "aliases": [
+          "deck do QBR"
+        ],
+        "source_excerpt": "Sobre o deck do QBR: Pedro, você vai entregar dia 03/04 ainda? Sim. Continuo. Te entrego dia 03/04 sem falta.",
+        "confidence": 1.0,
+        "type": "Task",
+        "description": null,
+        "deadline": "2026-04-03T00:00:00",
+        "priority": "high",
+        "effort_estimate": null,
+        "tags": [],
+        "state": "in_progress",
+        "unowned": false
+      },
+      {
+        "id": null,
+        "canonical_name": "Apresentar plano de retenção para Ricardo",
+        "aliases": [
+          "apresentar o plano direto pro Ricardo",
+          "Apresentação pro Ricardo"
+        ],
+        "source_excerpt": "Pedro, depois da entrega do deck (03/04), abre uma task pra você apresentar o plano direto pro Ricardo, sponsor da TechNova. Prioridade crítica. Anotado. Apresentação pro Ricardo, fica comigo, deadline 08/04.",
+        "confidence": 1.0,
+        "type": "Task",
+        "description": null,
+        "deadline": "2026-04-08T00:00:00",
+        "priority": "critical",
+        "effort_estimate": null,
+        "tags": [],
+        "state": "proposed",
+        "unowned": false
+      },
+      {
+        "id": null,
+        "canonical_name": "Pedro entrega deck do QBR dia 03/04",
+        "aliases": [
+          "Te entrego dia 03/04 sem falta"
+        ],
+        "source_excerpt": "Pedro, você vai entregar dia 03/04 ainda? Sim. Continuo. Te entrego dia 03/04 sem falta.",
+        "confidence": 1.0,
+        "type": "Commitment",
+        "committed_by_alias": "Pedro Silva",
+        "committed_to_alias": "Marina Costa",
+        "due_at": "2026-04-03T00:00:00",
+        "state": "pending"
+      }
+    ],
+    "relations": [
+      {
+        "relation_type": "assigned_to",
+        "from_alias": "Preparar spec da nova API",
+        "to_alias": "Pedro Silva",
+        "from_type": "Task",
+        "to_type": "Person",
+        "attributes": {},
+        "source_excerpt": "Atualizando: a spec da nova API ficou pronta ontem.",
+        "confidence": 0.9
+      },
+      {
+        "relation_type": "assigned_to",
+        "from_alias": "Preparar deck do QBR",
+        "to_alias": "Pedro Silva",
+        "from_type": "Task",
+        "to_type": "Person",
+        "attributes": {},
+        "source_excerpt": "Sobre o deck do QBR: Pedro, você vai entregar dia 03/04 ainda?",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "assigned_to",
+        "from_alias": "Apresentar plano de retenção para Ricardo",
+        "to_alias": "Pedro Silva",
+        "from_type": "Task",
+        "to_type": "Person",
+        "attributes": {},
+        "source_excerpt": "Apresentação pro Ricardo, fica comigo, deadline 08/04.",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "decided_by",
+        "from_alias": "Usar REST API para TechNova",
+        "to_alias": "Marina Costa",
+        "from_type": "Decision",
+        "to_type": "Person",
+        "attributes": {},
+        "source_excerpt": "Quero formalizar isso como uma decisão registrada: vamos com REST API pra TechNova.",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "decided_by",
+        "from_alias": "Oferecer 10% de service credit retroativo para TechNova",
+        "to_alias": "Marina Costa",
+        "from_type": "Decision",
+        "to_type": "Person",
+        "attributes": {},
+        "source_excerpt": "Vou registrar como decisão também: oferecer 10% de service credit retroativo pra TechNova como mitigação do risco de churn.",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "affects",
+        "from_alias": "Churn da TechNova",
+        "to_alias": "TechNova",
+        "from_type": "Risk",
+        "to_type": "Client",
+        "attributes": {},
+        "source_excerpt": "o risco de churn da TechNova subiu pra crítico depois do email de quarta.",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "mitigates",
+        "from_alias": "Oferecer 10% de service credit retroativo para TechNova",
+        "to_alias": "Churn da TechNova",
+        "from_type": "Decision",
+        "to_type": "Risk",
+        "attributes": {},
+        "source_excerpt": "oferecer 10% de service credit retroativo pra TechNova como mitigação do risco de churn.",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "answers",
+        "from_alias": "Usar REST API para TechNova",
+        "to_alias": "REST vs GraphQL",
+        "from_type": "Decision",
+        "to_type": "OpenQuestion",
+        "attributes": {},
+        "source_excerpt": "E ela responde aquela pergunta em aberto que eu tinha registrado dia 24, 'REST vs GraphQL'.",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "depends_on",
+        "from_alias": "Apresentar plano de retenção para Ricardo",
+        "to_alias": "Preparar deck do QBR",
+        "from_type": "Task",
+        "to_type": "Task",
+        "attributes": {},
+        "source_excerpt": "Pedro, depois da entrega do deck (03/04), abre uma task pra você apresentar o plano direto pro Ricardo",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "commits_to",
+        "from_alias": "Pedro Silva",
+        "to_alias": "Pedro entrega deck do QBR dia 03/04",
+        "from_type": "Person",
+        "to_type": "Commitment",
+        "attributes": {},
+        "source_excerpt": "Te entrego dia 03/04 sem falta.",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "participates_in",
+        "from_alias": "Marina Costa",
+        "to_alias": "TechNova",
+        "from_type": "Person",
+        "to_type": "Client",
+        "attributes": {},
+        "source_excerpt": "Participantes: Marina Costa, Pedro Silva, João Almeida, Beatriz Lima. Reunião: Status conta TechNova",
+        "confidence": 0.9
+      },
+      {
+        "relation_type": "participates_in",
+        "from_alias": "Pedro Silva",
+        "to_alias": "TechNova",
+        "from_type": "Person",
+        "to_type": "Client",
+        "attributes": {},
+        "source_excerpt": "Participantes: Marina Costa, Pedro Silva, João Almeida, Beatriz Lima. Reunião: Status conta TechNova",
+        "confidence": 0.9
+      },
+      {
+        "relation_type": "participates_in",
+        "from_alias": "João Almeida",
+        "to_alias": "TechNova",
+        "from_type": "Person",
+        "to_type": "Client",
+        "attributes": {},
+        "source_excerpt": "Participantes: Marina Costa, Pedro Silva, João Almeida, Beatriz Lima. Reunião: Status conta TechNova",
+        "confidence": 0.9
+      },
+      {
+        "relation_type": "participates_in",
+        "from_alias": "Beatriz Lima",
+        "to_alias": "TechNova",
+        "from_type": "Person",
+        "to_type": "Client",
+        "attributes": {},
+        "source_excerpt": "Participantes: Marina Costa, Pedro Silva, João Almeida, Beatriz Lima. Reunião: Status conta TechNova",
+        "confidence": 0.9
+      }
+    ],
+    "notes": "Documento bem estruturado com decisões formalizadas explicitamente. Marina Costa atua como líder da conta TechNova. A reunião demonstra processo maduro de gestão de risco de churn com ações concretas (service credit, nova API, apresentação ao sponsor). Há uma dependência temporal clara entre as tasks de Pedro (deck → apresentação). Ricardo é mencionado como sponsor da TechNova mas não participa da reunião; é uma pessoa externa (lado do cliente)."
+  },
+  "meta": {
+    "input_tokens": 9300,
+    "output_tokens": 3614,
+    "cost_usd": 0.08211,
+    "latency_ms": 37891,
+    "cache_hit": false
+  },
+  "model": "claude-sonnet-4-5",
+  "stage": "extraction"
+}

@@ -1,0 +1,321 @@
+{
+  "output": {
+    "entities": [
+      {
+        "id": null,
+        "canonical_name": "Marina Costa",
+        "aliases": [
+          "Marina Costa",
+          "Marina"
+        ],
+        "source_excerpt": "Participantes: Marina Costa, Pedro Silva, João Almeida, Beatriz Lima",
+        "confidence": 1.0,
+        "type": "Person",
+        "role": null,
+        "team": null,
+        "email": null,
+        "external_ids": {}
+      },
+      {
+        "id": null,
+        "canonical_name": "Pedro Silva",
+        "aliases": [
+          "Pedro Silva",
+          "Pedro",
+          "PS"
+        ],
+        "source_excerpt": "Participantes: Marina Costa, Pedro Silva, João Almeida, Beatriz Lima",
+        "confidence": 1.0,
+        "type": "Person",
+        "role": null,
+        "team": null,
+        "email": null,
+        "external_ids": {}
+      },
+      {
+        "id": null,
+        "canonical_name": "João Almeida",
+        "aliases": [
+          "João Almeida",
+          "João"
+        ],
+        "source_excerpt": "Participantes: Marina Costa, Pedro Silva, João Almeida, Beatriz Lima",
+        "confidence": 1.0,
+        "type": "Person",
+        "role": null,
+        "team": null,
+        "email": null,
+        "external_ids": {}
+      },
+      {
+        "id": null,
+        "canonical_name": "Beatriz Lima",
+        "aliases": [
+          "Beatriz Lima",
+          "Bea"
+        ],
+        "source_excerpt": "Participantes: Marina Costa, Pedro Silva, João Almeida, Beatriz Lima",
+        "confidence": 1.0,
+        "type": "Person",
+        "role": null,
+        "team": null,
+        "email": null,
+        "external_ids": {}
+      },
+      {
+        "id": null,
+        "canonical_name": "Ricardo",
+        "aliases": [
+          "Ricardo"
+        ],
+        "source_excerpt": "que é quando o sponsor deles, o Ricardo, faz a review trimestral conosco.",
+        "confidence": 1.0,
+        "type": "Person",
+        "role": null,
+        "team": null,
+        "email": null,
+        "external_ids": {}
+      },
+      {
+        "id": null,
+        "canonical_name": "Camila",
+        "aliases": [
+          "Camila"
+        ],
+        "source_excerpt": "Falo com a Camila hoje à tarde, ela é a líder de segurança.",
+        "confidence": 1.0,
+        "type": "Person",
+        "role": "líder de segurança",
+        "team": null,
+        "email": null,
+        "external_ids": {}
+      },
+      {
+        "id": null,
+        "canonical_name": "TechNova",
+        "aliases": [
+          "TechNova"
+        ],
+        "source_excerpt": "A TechNova é nosso cliente enterprise tier 1 e o renovo deles é em julho.",
+        "confidence": 1.0,
+        "type": "Client",
+        "client_type": "customer",
+        "tier": "enterprise tier 1",
+        "account_owner_alias": "Pedro Silva",
+        "state": "active"
+      },
+      {
+        "id": null,
+        "canonical_name": "Atlas",
+        "aliases": [
+          "Atlas"
+        ],
+        "source_excerpt": "o projeto interno que dá suporte a essa conta é o \"Atlas\". Atlas é o nome da iniciativa de modernização da plataforma de integração que a gente está rodando há dois meses.",
+        "confidence": 1.0,
+        "type": "Project",
+        "description": "iniciativa de modernização da plataforma de integração",
+        "start_date": null,
+        "target_date": "2026-06-30",
+        "tags": [],
+        "state": "active"
+      },
+      {
+        "id": null,
+        "canonical_name": "Risco de churn TechNova por SLA não cumprido",
+        "aliases": [
+          "risco de churn"
+        ],
+        "source_excerpt": "Eu queria chamar isso explicitamente como um risco de churn — tô preocupada que a gente não esteja vendo o problema do tamanho que ele é. Vou colocar como severity alto por enquanto.",
+        "confidence": 1.0,
+        "type": "Risk",
+        "severity": "high",
+        "likelihood": null,
+        "impact_description": "eles abriram dois tickets críticos no último mês e o tempo de resposta médio nosso ficou em 36h, contra os 8h do SLA",
+        "first_raised_at": null,
+        "state": "identified"
+      },
+      {
+        "id": null,
+        "canonical_name": "preparar deck do QBR",
+        "aliases": [
+          "preparar o deck do QBR",
+          "deck do QBR"
+        ],
+        "source_excerpt": "Pedro, você consegue preparar o deck do QBR até o dia 10/04?",
+        "confidence": 1.0,
+        "type": "Task",
+        "description": null,
+        "deadline": "2026-04-10T23:59:59",
+        "priority": "high",
+        "effort_estimate": null,
+        "tags": [],
+        "state": "in_progress",
+        "unowned": false
+      },
+      {
+        "id": null,
+        "canonical_name": "definir spec da nova API TechNova",
+        "aliases": [
+          "definir spec da nova API TechNova",
+          "spec da nova API"
+        ],
+        "source_excerpt": "Então a tarefa \"definir spec da nova API TechNova\" fica com o Pedro também, deadline 05/04. Prioridade alta por causa do QBR.",
+        "confidence": 1.0,
+        "type": "Task",
+        "description": null,
+        "deadline": "2026-04-05T23:59:59",
+        "priority": "high",
+        "effort_estimate": null,
+        "tags": [],
+        "state": "blocked",
+        "unowned": false
+      },
+      {
+        "id": null,
+        "canonical_name": "REST vs GraphQL para nova API TechNova",
+        "aliases": [
+          "REST vs GraphQL",
+          "REST ou GraphQL pra nova API"
+        ],
+        "source_excerpt": "vamos com REST ou GraphQL pra nova API que a TechNova pediu? Eles deixaram em aberto na última call, mas a decisão é nossa.",
+        "confidence": 1.0,
+        "type": "OpenQuestion",
+        "raised_by_alias": "Beatriz Lima",
+        "context": "Decisão pendente até 28/03. João defende REST por simplicidade, Marina defende GraphQL por flexibilidade do front-end.",
+        "state": "open"
+      },
+      {
+        "id": null,
+        "canonical_name": "Pedro entrega deck QBR dia 10/04",
+        "aliases": [
+          "Te entrego dia 10/04 sem falta"
+        ],
+        "source_excerpt": "Consigo sim, fica comigo. Te entrego dia 10/04 sem falta.",
+        "confidence": 1.0,
+        "type": "Commitment",
+        "committed_by_alias": "Pedro Silva",
+        "committed_to_alias": "Marina Costa",
+        "due_at": "2026-04-10T23:59:59",
+        "state": "pending"
+      },
+      {
+        "id": null,
+        "canonical_name": "Dependência: spec API aguarda resposta de segurança sobre auth",
+        "aliases": [
+          "bloqueio de segurança",
+          "resposta do time de segurança"
+        ],
+        "source_excerpt": "A definição da spec depende de uma resposta do time de segurança sobre o modelo de auth aceitável. Sem isso, o Pedro não consegue avançar.",
+        "confidence": 1.0,
+        "type": "Dependency",
+        "unblock_eta": null,
+        "responsible_alias": "João Almeida",
+        "state": "pending"
+      }
+    ],
+    "relations": [
+      {
+        "relation_type": "owns",
+        "from_alias": "Pedro Silva",
+        "to_alias": "TechNova",
+        "from_type": "Person",
+        "to_type": "Client",
+        "attributes": {},
+        "source_excerpt": "O account owner sou eu.",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "affects",
+        "from_alias": "Risco de churn TechNova por SLA não cumprido",
+        "to_alias": "TechNova",
+        "from_type": "Risk",
+        "to_type": "Client",
+        "attributes": {},
+        "source_excerpt": "Eu queria chamar isso explicitamente como um risco de churn",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "assigned_to",
+        "from_alias": "preparar deck do QBR",
+        "to_alias": "Pedro Silva",
+        "from_type": "Task",
+        "to_type": "Person",
+        "attributes": {},
+        "source_excerpt": "Pedro, você consegue preparar o deck do QBR até o dia 10/04? [10:10] Pedro Silva: Consigo sim, fica comigo.",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "assigned_to",
+        "from_alias": "definir spec da nova API TechNova",
+        "to_alias": "Pedro Silva",
+        "from_type": "Task",
+        "to_type": "Person",
+        "attributes": {},
+        "source_excerpt": "Então a tarefa \"definir spec da nova API TechNova\" fica com o Pedro também",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "belongs_to",
+        "from_alias": "definir spec da nova API TechNova",
+        "to_alias": "Atlas",
+        "from_type": "Task",
+        "to_type": "Project",
+        "attributes": {},
+        "source_excerpt": "A nova API entra como entregável do Atlas então. Vou adicionar como tarefa.",
+        "confidence": 0.9
+      },
+      {
+        "relation_type": "blocks",
+        "from_alias": "Dependência: spec API aguarda resposta de segurança sobre auth",
+        "to_alias": "definir spec da nova API TechNova",
+        "from_type": "Dependency",
+        "to_type": "Task",
+        "attributes": {},
+        "source_excerpt": "A definição da spec depende de uma resposta do time de segurança sobre o modelo de auth aceitável. Sem isso, o Pedro não consegue avançar.",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "commits_to",
+        "from_alias": "Pedro Silva",
+        "to_alias": "Pedro entrega deck QBR dia 10/04",
+        "from_type": "Person",
+        "to_type": "Commitment",
+        "attributes": {},
+        "source_excerpt": "Consigo sim, fica comigo. Te entrego dia 10/04 sem falta.",
+        "confidence": 1.0
+      },
+      {
+        "relation_type": "participates_in",
+        "from_alias": "Marina Costa",
+        "to_alias": "Atlas",
+        "from_type": "Person",
+        "to_type": "Project",
+        "attributes": {
+          "role": "facilitator"
+        },
+        "source_excerpt": "o projeto interno que dá suporte a essa conta é o \"Atlas\"",
+        "confidence": 0.8
+      },
+      {
+        "relation_type": "participates_in",
+        "from_alias": "Pedro Silva",
+        "to_alias": "Atlas",
+        "from_type": "Person",
+        "to_type": "Project",
+        "attributes": {},
+        "source_excerpt": "A nova API entra como entregável do Atlas então. Vou adicionar como tarefa.",
+        "confidence": 0.9
+      }
+    ],
+    "notes": "Documento bem estruturado com entidades claras. Observações:\n1. Ricardo é mencionado como \"sponsor\" da TechNova, mas não fica claro se é funcionário da TechNova ou da organização interna — interpretei como pessoa externa (cliente).\n2. A reunião de 28/03 é mencionada como deadline para a open question, mas não criei evento separado pois não há detalhes suficientes.\n3. João Almeida se compromete a falar com Camila \"hoje à tarde\" e voltar \"até amanhã\", mas não criei Commitment formal pois a linguagem é menos performativa que o caso do Pedro.\n4. O \"plano de ação concreto antes do dia 15/04\" mencionado por João não virou Task porque não há owner nem escopo definido — ficou como contexto do Risk."
+  },
+  "meta": {
+    "input_tokens": 9409,
+    "output_tokens": 2928,
+    "cost_usd": 0.072147,
+    "latency_ms": 33875,
+    "cache_hit": false
+  },
+  "model": "claude-sonnet-4-5",
+  "stage": "extraction"
+}

@@ -1,0 +1,17 @@
+{
+  "output": {
+    "action": "merge",
+    "target_id": "11a41fdf-b91d-4118-ad2d-32471467ac45",
+    "confidence": 0.92,
+    "reasoning": "Mesmo escopo (preparar deck do QBR para TechNova), aliases convergentes ('deck do QBR' presente em ambos), estado idêntico (in_progress). Deadline mudou de 10/04 para 03/04 e priority de high para critical — mudanças de atributo esperadas, não indicam entidades distintas. Similarity scores altos (cosine=0.843, combined=0.820) confirmam match."
+  },
+  "meta": {
+    "input_tokens": 2543,
+    "output_tokens": 213,
+    "cost_usd": 0.003608,
+    "latency_ms": 2234,
+    "cache_hit": false
+  },
+  "model": "claude-haiku-4-5",
+  "stage": "entity_resolution"
+}

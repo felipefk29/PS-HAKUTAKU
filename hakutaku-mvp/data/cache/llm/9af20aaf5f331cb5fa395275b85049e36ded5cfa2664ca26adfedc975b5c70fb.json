@@ -1,0 +1,17 @@
+{
+  "output": {
+    "action": "merge",
+    "target_id": "11a41fdf-b91d-4118-ad2d-32471467ac45",
+    "confidence": 0.92,
+    "reasoning": "Mesmo escopo (deck do QBR para TechNova), mesmo deadline (2026-04-03), mesmo estado (in_progress), e aliases convergentes. O candidato já menciona \"TechNova\" no nome e tem \"deck do QBR\" nos aliases. Pequena variação em priority (high vs critical) é compatível com atualização de atributo, não criação de nó novo."
+  },
+  "meta": {
+    "input_tokens": 2351,
+    "output_tokens": 203,
+    "cost_usd": 0.003366,
+    "latency_ms": 2172,
+    "cache_hit": false
+  },
+  "model": "claude-haiku-4-5",
+  "stage": "entity_resolution"
+}

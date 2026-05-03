@@ -1,0 +1,39 @@
+Reunião: Status conta TechNova
+Data: 2026-03-28
+Participantes: Marina Costa, Pedro Silva, João Almeida, Beatriz Lima
+
+[10:00] Marina Costa: Bom dia. Reunião curta hoje, foco em decisões. Recapitulando: o risco de churn da TechNova subiu pra crítico depois do email de quarta. Estamos em modo de ação.
+
+[10:03] Pedro Silva: Atualizando: a spec da nova API ficou pronta ontem. Foi feita em REST como combinado. Mandei pra TechNova validar. Eles respondem até quarta-feira (01/04).
+
+[10:05] Marina Costa: Ótimo. Quero formalizar isso como uma decisão registrada: vamos com REST API pra TechNova. A justificativa foi simplicidade pro time de engenharia, levantada pelo João, e fechada por consenso no chat. Reversibilidade: two-way — dá pra migrar pra GraphQL depois se quisermos.
+
+[10:07] João Almeida: Concordo. Decisão tomada.
+
+[10:09] Beatriz Lima: Anotando como decisão fechada de hoje, 28/03. E ela responde aquela pergunta em aberto que eu tinha registrado dia 24, "REST vs GraphQL".
+
+[10:11] Marina Costa: Exatamente. Bea, marca a open question como respondida.
+
+[10:13] Marina Costa: Sobre o deck do QBR: Pedro, você vai entregar dia 03/04 ainda?
+
+[10:14] Pedro Silva: Sim. Continuo. Te entrego dia 03/04 sem falta.
+
+[10:16] João Almeida: Mais um ponto: precisamos discutir o service credit que a Marina mencionou no chat. Eu acho que deveríamos oferecer 10% de crédito retroativo nos meses afetados pelos tickets críticos. Isso dá um sinal forte sem comprometer margem.
+
+[10:18] Marina Costa: Concordo com 10%. Vamos com isso. Vou registrar como decisão também: oferecer 10% de service credit retroativo pra TechNova como mitigação do risco de churn.
+
+[10:20] Beatriz Lima: Anotado. Reversibilidade: one-way (não dá pra "tirar" um crédito depois de oferecido).
+
+[10:22] Marina Costa: Pedro, depois da entrega do deck (03/04), abre uma task pra você apresentar o plano direto pro Ricardo, sponsor da TechNova. Prioridade crítica.
+
+[10:24] Pedro Silva: Anotado. Apresentação pro Ricardo, fica comigo, deadline 08/04.
+
+[10:26] Marina Costa: Última coisa: tem algum risco novo que apareceu? Alguma pergunta nova?
+
+[10:28] João Almeida: Uma pergunta que ficou: o que a gente faz se o Ricardo rejeitar o plano? Não temos plano B explícito. Acho que precisamos discutir isso semana que vem.
+
+[10:29] Marina Costa: Boa. Bea, anota como pergunta em aberto: "plano B se Ricardo rejeitar a proposta de retenção". Ainda sem resposta.
+
+[10:30] Beatriz Lima: Anotado.
+
+[10:31] Marina Costa: Fechado. Bom trabalho.

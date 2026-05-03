@@ -1,0 +1,40 @@
+Channel: #conta-technova
+Date: 2026-03-25
+
+[09:12] Marina: Pessoal, bom dia. A Camila respondeu sobre o modelo de auth pra API da TechNova. Ela aprovou OAuth2 + JWT, sem necessidade de mTLS. Pedro, dá pra avançar com a spec.
+
+[09:14] Pedro Silva: Boa, obrigado Marina. Vou começar a spec hoje. Sobre REST vs GraphQL, alguém já tem uma posição mais firme?
+
+[09:18] joao.almeida: Falei com o time de eng e olhei o stack atual. O peso da curva de aprendizado de GraphQL pra eles é alto. Voto REST.
+
+[09:20] marina.costa: Convencida pelo argumento de simplicidade. Vamos fechar como REST então. Bea, atualiza a anotação por favor.
+
+[09:21] Beatriz: Atualizado. "REST vs GraphQL" → fechada com REST. Marca como decision.
+
+[09:24] Pedro Silva: Show. Vou fazer a spec em REST então.
+
+----- 26/03 -----
+
+[14:02] Pedro Silva: Galera, péssima notícia. A TechNova mandou um email hoje dizendo que está avaliando alternativas. Citou a lentidão dos tickets como motivo principal. Isso muda completamente o tom.
+
+[14:05] Marina: Caraca. Então o risco de churn da TechNova subiu de alto pra crítico. Vou marcar assim. Precisamos de uma resposta organizacional, não só técnica.
+
+[14:07] Marina: Pedro, você consegue antecipar o deck do QBR pra 03/04 em vez de 10/04? Quero levar o plano de ação na próxima reunião.
+
+[14:08] Pedro Silva: Aperto, mas sim. Te entrego dia 03/04. Fica comigo.
+
+[14:10] joao.almeida: Eu sugiro também acelerar a entrega da nova API. Mover o deadline da spec pra 30/03 em vez de 05/04. Marina, pode mover?
+
+[14:12] Marina: Pode. Pedro, deadline da spec da API agora é 30/03. Sei que é apertado mas dado o cenário…
+
+[14:13] Pedro Silva: Entendi. Faço.
+
+----- 28/03 manhã (antes da reunião) -----
+
+[08:55] Beatriz: Lembrete: reunião de status da TechNova hoje 10h. Marina pediu pra todo mundo trazer atualização escrita do que avançou.
+
+[09:02] joao.almeida: Atualização minha: confirmei com a Camila que o ticket de segurança está fechado. Sem dependência aberta do meu lado.
+
+[09:04] Pedro Silva: Atualização: spec da API rascunhada, falta validar com a TechNova. Deck do QBR em 60%.
+
+[09:05] Marina: Bom. Mais uma coisa: vamos abrir uma proposta de oferecer um service credit pra TechNova como gesto de boa fé. Discutimos hoje.

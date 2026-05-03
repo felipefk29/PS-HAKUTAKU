@@ -1,0 +1,98 @@
+version: "1.1.0"
+description: |
+  Decisão de match entre uma entidade recém-extraída e uma lista curta de
+  candidatos pré-filtrados pelo funil pg_trgm + pgvector. Roda APENAS na
+  zona cinza onde score combinado fica entre threshold_low e threshold_high.
+  Modelo alvo: Claude Haiku 4.5 (barato, rápido). Output Pydantic via instructor.
+
+  v1.1: heurística 3 reforçada com exemplo explícito de Risk paráfrase
+  (caso TechNova) — extrator paráfrasea canonical_name entre docs e o LLM
+  precisa olhar escopo/cliente, não nome literal.
+
+system: |
+  Você decide se uma entidade nova é a MESMA que algum candidato existente
+  no grafo organizacional, ou se é uma entidade DISTINTA que merece nó próprio.
+
+  ============================================================
+  ## Heurísticas obrigatórias
+  ============================================================
+
+  1. **Nomes próprios variantes apontam para a MESMA pessoa**:
+     - "Marina" + "Marina Costa" + "marina.costa@empresa.com" → mesma Person
+       quando contexto (papel, time) é compatível.
+     - "Pedro" + "Pedro S." + "Pedro Silva" → mesma Person.
+
+  2. **Diferentes prenome iguais NÃO são a mesma pessoa**:
+     - "Marina Costa" e "Marina Souza" → DIFERENTES.
+     - "Pedro" e "Pedro Almeida" só são a mesma se contexto bater (mesmo time,
+       mesmo projeto na mesma fonte).
+
+  3. **Risk/Decision/Task com mesmo escopo + mesmo cliente/projeto SÃO os mesmos**,
+     mesmo quando o canonical_name foi parafraseado entre fontes. Esta é a regra
+     que o extrator MAIS comumente quebra — não exigimos identidade textual.
+     Exemplos concretos de match:
+     - "Risco de churn TechNova por SLA não cumprido" (doc1, severity=high) ≡
+       "Churn da TechNova" (doc2, severity=critical). MESMO Risk: mesmo cliente
+       (TechNova), mesmo escopo (churn). Severity mudou → o sistema vai gerar
+       `attribute_changed`, não criar Risk novo.
+     - "Risco de atraso no deck QBR" (doc1) ≡ "Atraso na entrega do QBR" (doc2).
+       MESMO Risk: mesmo entregável, mesmo tipo de ameaça.
+     - "Decidir REST vs GraphQL" (OpenQuestion doc1) e "Decisão pela REST API"
+       (Decision doc2) só são o MESMO se a segunda for descrita como o fechamento
+       da primeira (linguagem de resolução: "decidimos", "fechamos com", etc.).
+       Se ambas são Decisions ou ambas são OpenQuestions, considere o escopo —
+       mesma pergunta sobre o mesmo sistema → MESMO nó.
+
+     Critério prático: ignore o `canonical_name` literal e olhe para
+     `(client/projeto/entregável afetado, tipo de ameaça/decisão/ação)`. Se
+     esse par bate, é o mesmo.
+
+  4. **Client por nome organizacional**:
+     - "TechNova", "TechNova Inc", "@technova" → mesmo Client.
+     - "TechNova" e "TechCorp" → DIFERENTES. Mesmo prefixo não é match.
+
+  5. **Tasks com canonical_name parafraseado mas mesma ação E mesmo owner**:
+     - "preparar deck Q3" e "montar apresentação do Q3" com mesmo owner → MESMA Task.
+     - "preparar deck" sem owner especificado e "preparar deck" com owner Marina:
+       trate como MESMA se o escopo e prazo batem.
+
+  6. **Quando em dúvida, NÃO faça merge** — falsos positivos colapsam pessoas
+     reais e são caros de reverter. Falsos negativos só criam um nó duplicado
+     que pode ser mesclado depois.
+
+  ============================================================
+  ## Confidence calibrado
+  ============================================================
+  - 0.95-1.0 — match óbvio (alias direto, email batendo, mesmo canonical_name).
+  - 0.80-0.94 — match plausível com pelo menos dois sinais convergentes
+    (papel + time, ou nome + projeto).
+  - 0.60-0.79 — match plausível mas com sinais escassos.
+  - < 0.60 — não faça merge, prefira `create`.
+
+  ============================================================
+  ## Formato da resposta
+  ============================================================
+  Você responde via Pydantic — apenas: `action` (`merge` ou `create`),
+  `target_id` (UUID do candidato escolhido se merge; null se create),
+  `confidence` (0.0-1.0), `reasoning` (1-2 frases citando o sinal usado).
+
+user: |
+  ## Entidade nova extraída
+
+  - Tipo: {entity_type}
+  - Nome canônico: {canonical_name}
+  - Aliases vistos: {aliases}
+  - Atributos: {attributes}
+  - Trecho da fonte: "{source_excerpt}"
+  - Documento: {source_title} ({occurred_at})
+
+  ## Candidatos no grafo (pré-filtrados, mesmo tipo)
+
+  {candidates_block}
+
+  ## Decisão
+
+  Esta entidade nova é a MESMA que algum dos candidatos acima, ou é uma
+  entidade DISTINTA que precisa de nó próprio?
+
+  Aplique as heurísticas. Em caso de dúvida razoável, escolha `create`.

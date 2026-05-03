@@ -1,0 +1,17 @@
+{
+  "output": {
+    "action": "merge",
+    "target_id": "de3763d7-fb01-41d3-a4ae-87edbb52c685",
+    "confidence": 0.92,
+    "reasoning": "Nome canônico e aliases convergem fortemente (ambos \"Preparar deck do QBR\" / \"deck do QBR\"), deadline idêntico (2026-04-03), estado compatível (in_progress), e cosine similarity 0.945 indica match semântico robusto. Pequena variação em priority (high vs critical) é aceitável em contexto de atualização de status."
+  },
+  "meta": {
+    "input_tokens": 2075,
+    "output_tokens": 203,
+    "cost_usd": 0.00309,
+    "latency_ms": 2311,
+    "cache_hit": false
+  },
+  "model": "claude-haiku-4-5",
+  "stage": "entity_resolution"
+}

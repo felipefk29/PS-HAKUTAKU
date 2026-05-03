@@ -1,0 +1,17 @@
+{
+  "output": {
+    "action": "create",
+    "target_id": null,
+    "confidence": 0.15,
+    "reasoning": "Ambas são Decisions sobre a API TechNova, mas tratam de aspectos distintos: a entidade nova é sobre escolha de protocolo (REST vs GraphQL), enquanto o candidato é sobre autenticação (OAuth2 + JWT). Escopo e tipo de ameaça/decisão são diferentes. Similarity scores baixos (trgm=0.267, cosine=0.625) confirmam dissimilaridade textual. Não há convergência de sinais para merge."
+  },
+  "meta": {
+    "input_tokens": 2380,
+    "output_tokens": 200,
+    "cost_usd": 0.00338,
+    "latency_ms": 2030,
+    "cache_hit": false
+  },
+  "model": "claude-haiku-4-5",
+  "stage": "entity_resolution"
+}

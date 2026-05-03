@@ -1,0 +1,17 @@
+{
+  "output": {
+    "action": "merge",
+    "target_id": "74c9de27-5679-4d98-8422-70bae758f225",
+    "confidence": 0.95,
+    "reasoning": "Nome canônico idêntico (\"Camila\"), aliases coincidentes, e o candidato já possui atributo de role (\"líder de segurança\") compatível com aprovação de decisão técnica de auth. Trigram e cosine scores muito altos (0.846 combined) confirmam match óbvio."
+  },
+  "meta": {
+    "input_tokens": 2259,
+    "output_tokens": 181,
+    "cost_usd": 0.003164,
+    "latency_ms": 1937,
+    "cache_hit": false
+  },
+  "model": "claude-haiku-4-5",
+  "stage": "entity_resolution"
+}

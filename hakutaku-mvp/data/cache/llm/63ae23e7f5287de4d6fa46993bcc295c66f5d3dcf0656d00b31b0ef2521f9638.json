@@ -1,0 +1,17 @@
+{
+  "output": {
+    "action": "merge",
+    "target_id": "c0dfb0a6-cd79-46a7-868a-f8a0722b90db",
+    "confidence": 0.85,
+    "reasoning": "Mesmo escopo (spec da nova API REST para TechNova), mesmo cliente (TechNova), aliases convergentes ('spec da nova API' aparece em ambos). Estado mudou de 'in_progress' para 'done' — atributo_changed, não novo nó. Similarity scores altos (cosine=0.812, combined=0.756) reforçam match."
+  },
+  "meta": {
+    "input_tokens": 2624,
+    "output_tokens": 202,
+    "cost_usd": 0.003634,
+    "latency_ms": 2062,
+    "cache_hit": false
+  },
+  "model": "claude-haiku-4-5",
+  "stage": "entity_resolution"
+}

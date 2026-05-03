@@ -1,0 +1,17 @@
+{
+  "output": {
+    "action": "merge",
+    "target_id": "0f7b098d-6764-47ef-b09e-ba24e479b4b9",
+    "confidence": 0.92,
+    "reasoning": "Mesmo cliente (TechNova), mesmo escopo (churn), ambos com severity crítica e state 'identified'. Aliases convergem ('risco de churn da TechNova'). Parafraseação do canonical_name é esperada entre fontes diferentes; o par (cliente, tipo de ameaça) é idêntico."
+  },
+  "meta": {
+    "input_tokens": 2304,
+    "output_tokens": 189,
+    "cost_usd": 0.003249,
+    "latency_ms": 2328,
+    "cache_hit": false
+  },
+  "model": "claude-haiku-4-5",
+  "stage": "entity_resolution"
+}
